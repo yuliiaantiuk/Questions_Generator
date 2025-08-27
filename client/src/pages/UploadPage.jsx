@@ -71,7 +71,7 @@ const styles = {
   },
   title: {
     marginBottom: "20px",
-    fontSize: "24px", // щоб заголовок не був занадто величезним
+    fontSize: "24px", 
     fontWeight: "bold",
   },
   uploadBox: {
@@ -82,7 +82,7 @@ const styles = {
     padding: "30px 0px",
     cursor: "pointer",
     marginBottom: "15px",
-    width: "100%",       // займає всю ширину контейнера
+    width: "100%",  
   },
   textarea: {
     boxSizing: "border-box",
@@ -93,11 +93,11 @@ const styles = {
     borderRadius: "6px",
     border: "1px solid #ccc",
     marginBottom: "20px",
-    background: "#222",  // щоб виглядало краще на темному фоні
+    background: "#222",  
     color: "white",
   },
   button: {
-    width: "100%",       // кнопка на всю ширину
+    width: "100%",       
     background: "black",
     color: "white",
     padding: "12px 20px",
