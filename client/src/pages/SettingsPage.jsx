@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SettingsPage = () => {
   const [text, setText] = useState("");
+  const navigate = useNavigate();
 
   const handleGenerationStart = (e) => {
-    console.log("Генерація запитань розпочата!");
+    navigate("/progress");
   };
 
   return (

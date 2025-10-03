@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const UploadPage = () => {
   const [text, setText] = useState("");
+  const navigate = useNavigate();
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -10,9 +12,9 @@ const UploadPage = () => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log("Текст:", text);
-    // тут згодом буде перехід на сторінку налаштувань
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    navigate("/settings");
   };
 
   return (
