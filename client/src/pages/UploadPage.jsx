@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 const UploadPage = () => {
   const [text, setText] = useState("");
+  const [showHint, setShowHint] = useState(false);
   const navigate = useNavigate();
 
   const handleFileUpload = (e) => {
@@ -20,33 +21,52 @@ const UploadPage = () => {
   return (
     <div style={styles.contentWrapper}>
       <div style={styles.container}>
-      <h1 style={styles.title}>Завантажте або вставте теоретичні відомості</h1>
+        <h1 style={styles.title}>Завантажте або вставте теоретичні відомості</h1>
 
-      <label style={styles.uploadBox}>
-        <input
-          type="file"
-          accept=".txt,.doc,.docx,.pdf"
-          onChange={handleFileUpload}
-          style={{ display: "none" }}
-        />
-        <div style={{ textAlign: "center" }}>
-          <span style={{ fontSize: "40px" }}>☁️</span>
-          <p>Завантажте файл</p>
+        <div style={styles.hintContainer}>
+          <button
+            style={styles.hintButton}
+            onClick={() => setShowHint((prev) => !prev)}
+          >
+            Інструкція
+            <span style={styles.arrow}>{showHint ? "▲" : "▼"}</span>
+          </button>
+          {showHint && (
+            <div style={styles.hintBox}>
+              Вхідні дані повинні бути представлені як файли в форматі
+              <b> .pdf, .doc або .txt</b> або як простий текст українською або
+              англійською мовою <b>від 500 до 1&nbsp;000&nbsp;000 слів</b>.
+              Підтримується лише текстова інформація без вкладених зображень,
+              мультимедіа, таблиць чи інших складних форматів.
+            </div>
+          )}
         </div>
-      </label>
 
-      <p>або</p>
+        <label style={styles.uploadBox}>
+          <input
+            type="file"
+            accept=".txt,.doc,.docx,.pdf"
+            onChange={handleFileUpload}
+            style={{ display: "none" }}
+          />
+          <div style={{ textAlign: "center" }}>
+            <span style={{ fontSize: "60px" }}>☁️</span>
+            <p>Завантажте файл</p>
+          </div>
+        </label>
 
-      <textarea
-        placeholder="Напишіть текстом..."
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        style={styles.textarea}
-      />
+        <p>або</p>
 
-      <button style={styles.button} onClick={handleSubmit}>
-        Перейти до налаштування параметрів
-      </button>
+        <textarea
+          placeholder="Напишіть текстом..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          style={styles.textarea}
+        />
+
+        <button style={styles.button} onClick={handleSubmit}>
+          Перейти до налаштування параметрів
+        </button>
       </div>
     </div>
   );
@@ -73,8 +93,40 @@ const styles = {
   },
   title: {
     marginBottom: "20px",
-    fontSize: "24px", 
+    fontSize: "24px",
     fontWeight: "bold",
+  },
+  hintContainer: {
+    width: "100%",
+    marginBottom: "15px",
+    textAlign: "left",
+  },
+  hintButton: {
+    background: "none",
+    border: "none",
+    color: "#ccc",
+    fontSize: "16px",
+    cursor: "pointer",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "8px",
+    fontWeight: "500",
+    width: "100%",
+    border: "1px solid #ccc",
+  },
+  arrow: {
+    marginLeft: "6px",
+    fontSize: "12px",
+  },
+  hintBox: {
+    background: "#ccc",
+    borderRadius: "6px",
+    padding: "12px",
+    marginTop: "8px",
+    fontSize: "14px",
+    lineHeight: "1.4",
+    color: "#333",
   },
   uploadBox: {
     boxSizing: "border-box",
@@ -84,22 +136,22 @@ const styles = {
     padding: "30px 0px",
     cursor: "pointer",
     marginBottom: "15px",
-    width: "100%",  
+    width: "100%",
   },
   textarea: {
     boxSizing: "border-box",
-    maxWidth: "100%", 
-    minWidth: "100%", 
+    maxWidth: "100%",
+    minWidth: "100%",
     minHeight: "120px",
     padding: "10px",
     borderRadius: "6px",
     border: "1px solid #ccc",
     marginBottom: "20px",
-    background: "#222",  
+    background: "#222",
     color: "white",
   },
   button: {
-    width: "100%",       
+    width: "100%",
     background: "black",
     color: "white",
     padding: "12px 20px",
@@ -108,6 +160,5 @@ const styles = {
     cursor: "pointer",
   },
 };
-
 
 export default UploadPage;

@@ -304,8 +304,8 @@ const ResultPage = () => {
               </label>
             </div>
             <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-              <button style={styles.button} onClick={() => handleExport(exportFormat)}>Експортувати</button>
-              <button style={styles.button} onClick={() => setShowExportModal(false)}>Назад</button>
+              <button style={{ ...styles.button, ...styles.buttonWhiteOutline }} onClick={() => handleExport(exportFormat)}>Експортувати</button>
+              <button style={{ ...styles.button, ...styles.buttonWhiteOutline }} onClick={() => setShowExportModal(false)}>Назад</button>
             </div>
           </div>
         </div>
@@ -384,18 +384,21 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: "black",
     padding: "30px",
     borderRadius: "8px",
     width: "400px",
-    textAlign: "center",
+    textAlign: "left",
+  },
+  buttonWhiteOutline: {
+    border: "2px solid white",
   },
 };
 
