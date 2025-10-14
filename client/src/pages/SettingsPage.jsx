@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 const SettingsPage = () => {
   const [text, setText] = useState("");
+  const [showHint, setShowHint] = useState(false);
   const navigate = useNavigate();
 
   const handleGenerationStart = (e) => {
@@ -13,6 +14,25 @@ const SettingsPage = () => {
     <div style={styles.contentWrapper}>
       <div style={styles.container}>
         <h1 style={styles.title}>Налаштуйте потрібні параметри:</h1>
+
+        <button
+            style={styles.hintButton}
+            onClick={() => setShowHint((prev) => !prev)}
+          >
+            Інструкція
+            <span style={styles.arrow}>{showHint ? "▲" : "▼"}</span>
+        </button>
+
+        {showHint && (
+            <div style={styles.hintBox}>
+              Оберіть від <b>одного</b> до <b>чотирьох</b> типів запитань для генерації.
+              <br />
+              Вкажіть кількість запитань для кожного обраного типу (<b>1 - 10</b>)
+              <br />
+              Загальна кількість запитань розраховується автоматично.
+            </div>
+        )}
+          {/* <button onClick={() => setShowHint((prev) => !prev)}></button> */}
         <h3 style={styles.text}>Тип запитань:</h3>
         <div style={styles.optionContainer}>
             <div>
@@ -83,6 +103,38 @@ const styles = {
   },
   text: {
     fontSize: "16px",
+  },
+    hintContainer: {
+    width: "100%",
+    marginBottom: "15px",
+    textAlign: "left",
+  },
+  hintButton: {
+    background: "none",
+    border: "none",
+    color: "#ccc",
+    fontSize: "16px",
+    cursor: "pointer",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "8px",
+    fontWeight: "500",
+    width: "100%",
+    border: "1px solid #ccc",
+  },
+  arrow: {
+    marginLeft: "6px",
+    fontSize: "12px",
+  },
+  hintBox: {
+    background: "#ccc",
+    borderRadius: "6px",
+    padding: "12px",
+    marginTop: "8px",
+    fontSize: "14px",
+    lineHeight: "1.4",
+    color: "#333",
   },
   optionContainer: {
     display: "flex",
