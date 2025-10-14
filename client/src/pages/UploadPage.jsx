@@ -4,14 +4,43 @@ import { useNavigate } from "react-router-dom";
 const UploadPage = () => {
   const [text, setText] = useState("");
   const [showHint, setShowHint] = useState(false);
+  const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
+  const allowedFormats = [".txt", ".doc", ".docx", ".pdf"];
+
+  const isFileValid = (fileName) => {
+    return allowedFormats.some((ext) => fileName.toLowerCase().endsWith(ext));
+  };
+
   const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      console.log("Файл завантажено:", file.name);
+    const uploadedFile = e.target.files[0];
+    if (uploadedFile && isFileValid(uploadedFile.name)) {
+      setFile(uploadedFile);
+      setText("");
+    } else {
+      alert("Будь ласка, завантажте файл формату .txt, .doc, .docx або .pdf");
+      e.target.value = ""; // очищаємо input
+      setFile(null);
     }
   };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+  };
+
+
+  const handleTextChange = (e) => {
+    const newText = e.target.value;
+    setText(newText);
+    if (newText.trim().length > 0) {
+      setFile(null); // очищаємо файл, якщо користувач почав вводити текст
+    }
+  };
+
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+
+  const isButtonEnabled = (file && isFileValid(file.name)) || wordCount >= 500;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -40,13 +69,40 @@ const UploadPage = () => {
               мультимедіа, таблиць чи інших складних форматів.
             </div>
           )}
+
+          {file && (
+          <div style={styles.fileInfo}>
+            <span>
+              Завантажено файл {file.name}
+            </span>
+            <button
+              onClick={handleRemoveFile}
+              style={styles.dangerButton}
+            >
+              Видалити
+            </button>
+          </div>
+        )}
         </div>
+
+        {text.trim().length > 0 && (
+          <p style={styles.disabledHint}>
+            Завантаження файлу недоступне, оскільки ви ввели текст вручну
+          </p>
+        )}
+
+        {!!file && (
+          <p style={styles.disabledHint}>
+            Ви можете завантажити тільки один файл
+          </p>
+        )}
 
         <label style={styles.uploadBox}>
           <input
             type="file"
             accept=".txt,.doc,.docx,.pdf"
             onChange={handleFileUpload}
+            disabled={text.trim().length > 0 || !!file}
             style={{ display: "none" }}
           />
           <div style={{ textAlign: "center" }}>
@@ -57,16 +113,31 @@ const UploadPage = () => {
 
         <p>або</p>
 
+        {file && (
+        <p style={styles.disabledHint}>
+          Поле введення тексту недоступне, оскільки ви завантажили файл
+          </p>
+        )}
+
         <textarea
           placeholder="Напишіть текстом..."
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={handleTextChange}
+          disabled={!!file}
           style={styles.textarea}
         />
 
-        <button style={styles.button} onClick={handleSubmit}>
-          Перейти до налаштування параметрів
-        </button>
+      <button
+        onClick={handleSubmit}
+        disabled={!isButtonEnabled}
+        className={`px-6 py-3 rounded font-semibold transition ${
+          isButtonEnabled
+            ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+            : "bg-gray-600 cursor-not-allowed"
+        }`}
+      >
+        Перейти до налаштування параметрів
+      </button>
       </div>
     </div>
   );
@@ -138,6 +209,17 @@ const styles = {
     marginBottom: "15px",
     width: "100%",
   },
+  fileInfo: {
+    marginTop: "10px",
+    fontSize: "14px",
+    color: "#ccc",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#333",
+    padding: "8px",
+    borderRadius: "6px",
+  },
   textarea: {
     boxSizing: "border-box",
     maxWidth: "100%",
@@ -158,6 +240,20 @@ const styles = {
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
+  },
+  disabledHint: {
+    color: "red",
+    fontSize: "14px",
+    marginBottom: "10px",
+    // backgroundColor: "#ccc",
+    // padding: "8px",
+    borderRadius: "6px",
+    // color: "#333",
+    color: "#ccc",
+  },
+  dangerButton: {
+    backgroundColor: "#e74c3c",
+    color: "white",
   },
 };
 
