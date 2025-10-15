@@ -5,7 +5,7 @@ const ProgressPage = () => {
   const navigate = useNavigate();
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const intervalRef = useRef(null); // для збереження інтервалу
+  const intervalRef = useRef(null);
 
   const handlePauseResume = () => {
     setIsPaused((prev) => !prev);
@@ -29,7 +29,6 @@ const ProgressPage = () => {
       }, 200);
     }
 
-    // очистка інтервалу при паузі або виході
     return () => clearInterval(intervalRef.current);
   }, [isPaused, navigate]);
 
@@ -37,15 +36,20 @@ const ProgressPage = () => {
     <div style={styles.contentWrapper}>
       <div style={styles.container}>
         <h1 style={styles.title}>Виконується генерація тестових запитань</h1>
-        <div className="w-full bg-gray-200 rounded-full h-6">
+
+        {/* Прогрес-бар */}
+        <div style={styles.progressBar}>
           <div
-            className="bg-purple-600 h-6 rounded-full transition-all duration-200"
-            style={{ width: `${progress}%` }}
+            style={{
+              ...styles.progressFill,
+              width: `${progress}%`,
+            }}
           ></div>
         </div>
 
-        <p className="mt-2">{progress}%</p>
-        <div className="buttons" style={styles.buttonContainer}>
+        <p style={styles.progressText}>{progress}%</p>
+
+        <div style={styles.buttonContainer}>
           <button style={styles.button} onClick={handlePauseResume}>
             {isPaused ? "Продовжити" : "Пауза"}
           </button>
@@ -88,6 +92,24 @@ const styles = {
     fontSize: "24px",
     fontWeight: "bold",
     textAlign: "center",
+  },
+  progressBar: {
+    width: "100%",
+    height: "20px",
+    background: "#ddd",
+    borderRadius: "10px",
+    overflow: "hidden",
+    boxShadow: "inset 0 0 5px rgba(0,0,0,0.2)",
+  },
+  progressFill: {
+    height: "100%",
+    background: "linear-gradient(90deg, #000000ff, #08000eff)",
+    transition: "width 0.3s ease-in-out",
+  },
+  progressText: {
+    marginTop: "10px",
+    fontSize: "16px",
+    fontWeight: "500",
   },
   buttonContainer: {
     display: "flex",
