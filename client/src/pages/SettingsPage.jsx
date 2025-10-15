@@ -5,6 +5,20 @@ const SettingsPage = () => {
   const [text, setText] = useState("");
   const [showHint, setShowHint] = useState(false);
   const navigate = useNavigate();
+  const [singleChoice, setSingleChoice] = useState(0);
+  const [multipleChoice, setMultipleChoice] = useState(0);
+  const [trueFalse, setTrueFalse] = useState(0);
+  const [shortAnswer, setShortAnswer] = useState(0);
+
+  const totalQuestions =
+    (Number(singleChoice) || 0) +
+    (Number(multipleChoice) || 0) +
+    (Number(trueFalse) || 0) +
+    (Number(shortAnswer) || 0);
+
+
+  const isButtonDisabled = totalQuestions === 0;
+
 
   const handleGenerationStart = (e) => {
     navigate("/progress");
@@ -25,47 +39,108 @@ const SettingsPage = () => {
 
         {showHint && (
             <div style={styles.hintBox}>
-              Оберіть від <b>одного</b> до <b>чотирьох</b> типів запитань для генерації.
-              <br />
-              Вкажіть кількість запитань для кожного обраного типу (<b>1 - 10</b>)
+              Вкажіть кількість запитань кожного типу для генерації (<b>1 - 10</b>). Якщо ви не хочете генерувати запитання певного типу, введіть <b>0</b> або залиште відповідне поле пустим.
               <br />
               Загальна кількість запитань розраховується автоматично.
             </div>
         )}
-          {/* <button onClick={() => setShowHint((prev) => !prev)}></button> */}
         <h3 style={styles.text}>Тип запитань:</h3>
-        <div style={styles.optionContainer}>
-            <div>
-                <input type="checkbox" name="questionType" id="single-choice" />
-                <label htmlFor="single-choice">Одинарний вибір</label>
-            </div>
-            <div>
-                <input type="checkbox" name="questionType" id="multiple-choice" />
-                <label htmlFor="multiple-choice">Множинний вибір</label>
-            </div>
-            <div>
-                <input type="checkbox" name="questionType" id="true-false" />
-                <label htmlFor="true-false">Правда/Неправда</label>
-            </div>
-            <div>
-                <input type="checkbox" name="questionType" id="short-answer" />
-                <label htmlFor="short-answer">Коротка відповідь</label>
-            </div>
-        </div>
         <div style={styles.quantityContainer}>
             <div>
                 <label>Кількість запитань типу <span><b>Одинарний вибір</b></span>:</label>
-                <input type="number" />
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  value={singleChoice === "" ? "" : singleChoice}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      setSingleChoice("");
+                      return;
+                    }
+                    const numValue = Math.max(0, Math.min(10, Number(value)));
+                    setSingleChoice(numValue);
+                  }}
+                  style={styles.quantityInput}
+                />
+
+
             </div>
             <div>
                 <label>Кількість запитань типу <span><b>Множинний вибір</b></span>:</label>
-                <input type="number" />
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  value={multipleChoice === "" ? "" : multipleChoice}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      setMultipleChoice("");
+                      return;
+                    }
+                    const numValue = Math.max(0, Math.min(10, Number(value)));
+                    setMultipleChoice(numValue);
+                  }}
+                  style={styles.quantityInput}
+                />
+            </div>
+            <div>
+                <label>Кількість запитань типу <span><b>Правда/Неправда</b></span>:</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  value={trueFalse === "" ? "" : trueFalse}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      setTrueFalse("");
+                      return;
+                    }
+                    const numValue = Math.max(0, Math.min(10, Number(value)));
+                    setTrueFalse(numValue);
+                  }}
+                  style={styles.quantityInput}
+                />
+            </div>
+            <div>
+                <label>Кількість запитань типу <span><b>Коротка відповідь</b></span>:</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  value={shortAnswer === "" ? "" : shortAnswer}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      setShortAnswer("");
+                      return;
+                    }
+                    const numValue = Math.max(0, Math.min(10, Number(value)));
+                    setShortAnswer(numValue);
+                  }}
+                  style={styles.quantityInput}
+                />
             </div>
         </div>
-        <div style={styles.quantityCount}>Кількість запитань всього (автоматичний розрахунок): <b><u>0</u></b></div>
-        <button style={styles.button} onClick={handleGenerationStart}>
-        Почати генерацію
+        <div style={styles.quantityCount}>
+          Кількість запитань всього (автоматичний розрахунок): <b><u>{totalQuestions}</u></b>
+        </div>
+
+        <button
+          style={{
+            ...styles.button,
+            opacity: isButtonDisabled ? 0.5 : 1,
+            cursor: isButtonDisabled ? "not-allowed" : "pointer",
+          }}
+          disabled={isButtonDisabled}
+          onClick={handleGenerationStart}
+        >
+          Почати генерацію
         </button>
+
       </div>
     </div>
   );
@@ -97,7 +172,7 @@ const styles = {
     padding: "30px"
   },
   title: {
-    marginBottom: "10px",
+    marginBottom: "20px",
     fontSize: "24px", 
     fontWeight: "bold",
   },
@@ -136,17 +211,16 @@ const styles = {
     lineHeight: "1.4",
     color: "#333",
   },
-  optionContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    marginBottom: "20px",
-  },
   quantityContainer: {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
     marginBottom: "20px",
+  },
+  quantityInput:{
+    padding: "6px",
+    width: "100%",
+    marginTop: "10px",
   },
   quantityCount:{
     marginBottom: "20px",

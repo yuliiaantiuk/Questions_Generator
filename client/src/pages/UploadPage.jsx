@@ -127,17 +127,19 @@ const UploadPage = () => {
           style={styles.textarea}
         />
 
-      <button
-        onClick={handleSubmit}
-        disabled={!isButtonEnabled}
-        className={`px-6 py-3 rounded font-semibold transition ${
-          isButtonEnabled
-            ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-            : "bg-gray-600 cursor-not-allowed"
-        }`}
-      >
-        Перейти до налаштування параметрів
-      </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!isButtonEnabled}
+          style={{
+            ...styles.button,
+            opacity: !isButtonEnabled ? 0.5 : 1,
+            cursor: !isButtonEnabled ? "not-allowed" : "pointer",
+            transition: "opacity 0.3s ease, background 0.3s ease",
+          }}
+        >
+          Перейти до налаштування параметрів
+        </button>
+
       </div>
     </div>
   );
