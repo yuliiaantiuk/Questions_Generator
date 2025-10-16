@@ -96,14 +96,14 @@ const styles = {
   progressBar: {
     width: "100%",
     height: "20px",
-    background: "#ddd",
+    background: "#545353ff",
     borderRadius: "10px",
     overflow: "hidden",
     boxShadow: "inset 0 0 5px rgba(0,0,0,0.2)",
   },
   progressFill: {
     height: "100%",
-    background: "linear-gradient(90deg, #000000ff, #08000eff)",
+    background: "#ccc",
     transition: "width 0.3s ease-in-out",
   },
   progressText: {
