@@ -13,6 +13,39 @@ const UploadPage = () => {
     return allowedFormats.some((ext) => fileName.toLowerCase().endsWith(ext));
   };
 
+  const uploadData = async () => {
+  try {
+    let response;
+
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      response = await fetch("http://localhost:5000/api/upload/file", {
+        method: "POST",
+        body: formData,
+      });
+    } else {
+      response = await fetch("http://localhost:5000/api/upload/text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+    }
+
+    if (!response.ok) throw new Error("Помилка при збереженні даних");
+
+    const result = await response.json();
+    console.log("Дані збережено:", result);
+
+    // Передаємо ID або токен сесії на наступну сторінку
+    localStorage.setItem("sessionId", result.sessionId);
+    navigate("/settings");
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+
   const handleFileUpload = (e) => {
     const uploadedFile = e.target.files[0];
     if (uploadedFile && isFileValid(uploadedFile.name)) {
@@ -42,10 +75,11 @@ const UploadPage = () => {
 
   const isButtonEnabled = (file && isFileValid(file.name)) || wordCount >= 500;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    navigate("/settings");
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  await uploadData();
+};
+
 
   return (
     <div style={styles.contentWrapper}>

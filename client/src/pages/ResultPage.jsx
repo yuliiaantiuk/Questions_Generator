@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+
 
 const ResultPage = () => {
   const [text, setText] = useState("");
@@ -8,6 +9,10 @@ const ResultPage = () => {
   const [includeAnswers, setIncludeAnswers] = useState(true);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const generatedData = location.state || {}; 
+  // generatedData.questions — масив запитань, який передали з ProgressPage
+
 
 const handleExport = (format) => {
   const content = generateExportContent(); // формуємо текст
@@ -61,27 +66,39 @@ const handleExport = (format) => {
     navigate("/settings");
   };
 
+  const handleSpeakAll = () => {
+  const synth = window.speechSynthesis;
+  synth.cancel(); // скасувати попереднє озвучення
+
+  generatedData.questions.forEach((q) => {
+    const utter = new SpeechSynthesisUtterance(q.text);
+    utter.lang = "uk-UA"; // українська мова
+    synth.speak(utter);
+  });
+};
+
+
   // Виправити форматування тексту для експорту
 
   const generateExportContent = () => {
     let content = "Результат генерації запитань:\n\n";
 
-    content += "=== Запитання з однією відповіддю ===\n";
+    content += "Запитання з однією відповіддю:\n";
     content += includeAnswers
       ? "✔ Варіант 1 (правильна відповідь)\nВаріант 2\nВаріант 3\nВаріант 4\n\n"
       : "Варіант 1\nВаріант 2\nВаріант 3\nВаріант 4\n\n";
 
-    content += "=== Запитання з множинною відповіддю ===\n";
+    content += "Запитання з множинною відповіддю:\n";
     content += includeAnswers
       ? "✔ Варіант 1 (правильна)\n✔ Варіант 2 (правильна)\nВаріант 3\nВаріант 4\n\n"
       : "Варіант 1\nВаріант 2\nВаріант 3\nВаріант 4\n\n";
 
-    content += "=== Твердження ===\n";
+    content += "Твердження:\n";
     content += includeAnswers
       ? "✔ Правда (правильна відповідь)\nНеправда\n\n"
       : "Правда\nНеправда\n\n";
 
-    content += "=== Коротка відповідь ===\n";
+    content += "Коротка відповідь:\n";
     content += "Твоя відповідь: " + (text || "—") + "\n\n";
 
     return content;
@@ -92,7 +109,7 @@ const handleExport = (format) => {
       <div style={styles.container}>
         <h1 style={styles.title}>Результат генерації:</h1>
 
-        <h3 style={styles.text}>Запитання з однією відповіддю:</h3>
+        {/* <h3 style={styles.text}>Запитання з однією відповіддю:</h3>
         <div style={styles.optionContainer}>
           <div>
             <input type="radio" name="singleChoice" disabled checked/>
@@ -151,11 +168,59 @@ const handleExport = (format) => {
           onChange={(e) => setText(e.target.value)}
           style={styles.textarea}
           disabled
-        />
+        /> */}
+
+        {generatedData.questions?.map((q, index) => (
+  <div key={index} style={styles.questionBlock}>
+    <h3>Запитання {index + 1}:</h3>
+    <p>{q.text}</p>
+
+    {q.type === "singleChoice" && (
+      <div style={styles.optionContainer}>
+        {q.options.map((opt, i) => (
+          <div key={i}>
+            <input type="radio" disabled checked={i === q.correctIndex} />
+            <label>{opt}</label>
+          </div>
+        ))}
+      </div>
+        )}
+
+        {q.type === "multipleChoice" && (
+          <div style={styles.optionContainer}>
+            {q.options.map((opt, i) => (
+              <div key={i}>
+                <input type="checkbox" disabled checked={q.correctIndexes.includes(i)} />
+                <label>{opt}</label>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {q.type === "trueFalse" && (
+          <div style={styles.optionContainer}>
+            <div>
+              <input type="radio" disabled checked={q.correctAnswer === true} />
+              <label>Правда</label>
+            </div>
+            <div>
+              <input type="radio" disabled checked={q.correctAnswer === false} />
+              <label>Неправда</label>
+            </div>
+          </div>
+        )}
+
+        {q.type === "shortAnswer" && (
+          <textarea value={q.answer || ""} disabled style={styles.textarea} />
+        )}
+      </div>
+    ))}
+
 
         <div className="buttons" style={styles.buttonContainer}>
           <button style={styles.button} onClick={() => setShowExportModal(true)}>Експорт</button>
           <button style={styles.button} onClick={handleRepeatGeneration}>Повторити генерацію</button>
+          <button style={styles.button} onClick={handleSpeakAll}>Озвучити запитання</button>
         </div>
       </div>
 
@@ -171,7 +236,7 @@ const handleExport = (format) => {
                   value="pdf"
                   checked={exportFormat === "pdf"}
                   onChange={(e) => setExportFormat(e.target.value)}
-                /> PDF
+                /> Документ PDF (.pdf)
               </label>
               <label>
                 <input
@@ -179,7 +244,7 @@ const handleExport = (format) => {
                   value="doc"
                   checked={exportFormat === "doc"}
                   onChange={(e) => setExportFormat(e.target.value)}
-                /> DOC
+                /> Документ Microsoft Word (.doc)
               </label>
               <label>
                 <input
@@ -187,7 +252,7 @@ const handleExport = (format) => {
                   value="txt"
                   checked={exportFormat === "txt"}
                   onChange={(e) => setExportFormat(e.target.value)}
-                /> TXT
+                /> Простий текст (.txt)
               </label>
               <label>
                 <input
@@ -195,13 +260,12 @@ const handleExport = (format) => {
                   value="html"
                   checked={exportFormat === "html"}
                   onChange={(e) => setExportFormat(e.target.value)}
-                /> HTML
+                /> Спрощений HTML-файл (.html)
               </label>
               <label>
                 <input
                   type="checkbox"
-                  value="html"
-                  checked
+                  checked={includeAnswers}
                   onChange={(e) => setIncludeAnswers(e.target.checked)}
                 /> Показувати правильні відповіді
               </label>
@@ -303,6 +367,14 @@ const styles = {
   buttonWhiteOutline: {
     border: "2px solid white",
   },
+  questionBlock: {
+  // marginBottom: "20px",
+  // padding: "15px",
+  // border: "1px solid #ccc",
+  // borderRadius: "6px",
+  width: "90%",
+},
+
 };
 
 export default ResultPage;

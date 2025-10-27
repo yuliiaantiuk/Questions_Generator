@@ -9,6 +9,11 @@ const SettingsPage = () => {
   const [multipleChoice, setMultipleChoice] = useState(0);
   const [trueFalse, setTrueFalse] = useState(0);
   const [shortAnswer, setShortAnswer] = useState(0);
+  const [difficulty, setDifficulty] = useState("medium"); 
+  const [keywords, setKeywords] = useState([]);
+  const [showKeywords, setShowKeywords] = useState(false);
+
+
 
   const totalQuestions =
     (Number(singleChoice) || 0) +
@@ -20,9 +25,19 @@ const SettingsPage = () => {
   const isButtonDisabled = totalQuestions === 0;
 
 
-  const handleGenerationStart = (e) => {
-    navigate("/progress");
-  };
+const handleGenerationStart = () => {
+  navigate("/progress", {
+    state: {
+      singleChoice,
+      multipleChoice,
+      trueFalse,
+      shortAnswer,
+      difficulty,
+      keywords,
+    },
+  });
+};
+
 
   return (
     <div style={styles.contentWrapper}>
@@ -129,6 +144,78 @@ const SettingsPage = () => {
           Кількість запитань всього (автоматичний розрахунок): <b><u>{totalQuestions}</u></b>
         </div>
 
+        <h3 style={styles.text}>Рівень складності:</h3>
+        <div style={styles.difficultyContainer}>
+          <label>
+            <input
+              type="radio"
+              name="difficulty"
+              value="easy"
+              checked={difficulty === "easy"}
+              onChange={() => setDifficulty("easy")}
+            />
+            Простий
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="difficulty"
+              value="medium"
+              checked={difficulty === "medium"}
+              onChange={() => setDifficulty("medium")}
+            />
+            Середній
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="difficulty"
+              value="hard"
+              checked={difficulty === "hard"}
+              onChange={() => setDifficulty("hard")}
+            />
+            Складний
+          </label>
+        </div>
+
+        {showKeywords ? (
+        <div style={styles.keywordsBox}>
+          <h3>Ключові слова:</h3>
+          {keywords.length === 0 ? (
+            <p>Ключові слова ще не згенеровані.</p>
+          ) : (
+            <div style={styles.keywordsList}>
+              {keywords.map((word, index) => (
+                <div key={index} style={styles.keywordItem}>
+                  <span>{word}</span>
+                  <button
+                    style={styles.removeKeywordButton}
+                    onClick={() =>
+                      setKeywords((prev) => prev.filter((_, i) => i !== index))
+                    }
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button style={styles.buttonSecondary} onClick={() => setShowKeywords(false)}>
+            Приховати
+          </button>
+        </div>
+      ) : (
+        <button style={styles.buttonSecondary} onClick={() => {
+          // Імітація генерації ключових слів (поки бекенд не готовий)
+          setKeywords(["освіта", "навчання", "піфагор", "математика", "інтелект"]);
+          setShowKeywords(true);
+        }}>
+          Показати ключові слова
+        </button>
+      )}
+
+
+
         <button
           style={{
             ...styles.button,
@@ -234,6 +321,51 @@ const styles = {
     borderRadius: "6px",
     cursor: "pointer",
   },
+  difficultyContainer: {
+  display: "flex",
+  justifyContent: "space-between",
+  width: "100%",
+  marginBottom: "20px",
+  },
+  keywordsBox: {
+    // width: "100%",
+    border: "2px solid #f0f0f0",
+    padding: "10px",
+    borderRadius: "6px",
+    marginBottom: "20px",
+  },
+  keywordsList: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
+    marginBottom: "10px",
+  },
+  keywordItem: {
+    border: "2px solid #ddd",
+    padding: "6px 10px",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+  },
+  removeKeywordButton: {
+    background: "none",
+    border: "none",
+    color: "red",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  buttonSecondary: {
+    background: "#3d3d3dff",
+    color: "white",
+    padding: "8px 14px",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    width: "100%",
+    marginBottom: "10px",
+  },
+
 };
 
 
