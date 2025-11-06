@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const SettingsPage = () => {
@@ -23,6 +23,28 @@ const SettingsPage = () => {
 
 
   const isButtonDisabled = totalQuestions === 0;
+
+useEffect(() => {
+  const sessionId = localStorage.getItem("sessionId");
+  if (!sessionId) return;
+
+  const ping = () => {
+    fetch(`http://localhost:5000/api/session/ping/${sessionId}`, {
+      method: "POST"
+    }).catch(() => {});
+  };
+
+  // пінг кожні 5 хвилин
+  const interval = setInterval(ping, 5 * 60 * 1000);
+
+  // очищення при закритті вкладки
+  window.addEventListener("beforeunload", ping);
+
+  return () => {
+    clearInterval(interval);
+    window.removeEventListener("beforeunload", ping);
+  };
+}, []);
 
 
 const handleGenerationStart = () => {

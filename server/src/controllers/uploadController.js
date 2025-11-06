@@ -1,11 +1,20 @@
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { fileURLToPath } from "url";
+import { createSession } from "../utils/sessionManager.js"; // додаємо менеджер сесій
 
-const TEMP_STORAGE = path.join(process.cwd(), "server", "temp");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// переконайся, що папка існує
-if (!fs.existsSync(TEMP_STORAGE)) fs.mkdirSync(TEMP_STORAGE, { recursive: true });
+// TEMP_STORAGE тепер завжди буде в server/temp
+const TEMP_STORAGE = path.join(__dirname, "..", "temp");
+
+// перевіряємо, що директорія існує
+if (!fs.existsSync(TEMP_STORAGE)) {
+  fs.mkdirSync(TEMP_STORAGE, { recursive: true });
+  console.log("Створено директорію:", TEMP_STORAGE);
+}
 
 // Збереження текстових даних
 export const handleTextUpload = async (req, res) => {
@@ -20,8 +29,13 @@ export const handleTextUpload = async (req, res) => {
 
     fs.writeFileSync(filePath, text, "utf-8");
 
+    // після успішного збереження — реєструємо сесію
+    createSession(sessionId, filePath);
+
     res.status(200).json({ message: "Текст збережено", sessionId });
+    console.log("Текст збережено у:", filePath);
   } catch (error) {
+    console.error("Помилка збереження тексту:", error);
     res.status(500).json({ error: "Помилка збереження тексту" });
   }
 };
@@ -39,8 +53,12 @@ export const handleFileUpload = async (req, res) => {
 
     fs.renameSync(req.file.path, newPath);
 
+    createSession(sessionId, newPath);
+
     res.status(200).json({ message: "Файл збережено", sessionId });
+    console.log("Файл збережено у:", newPath);
   } catch (error) {
+    console.error("Помилка збереження файлу:", error);
     res.status(500).json({ error: "Помилка збереження файлу" });
   }
 };

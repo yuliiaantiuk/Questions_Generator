@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 
@@ -12,6 +12,29 @@ const ResultPage = () => {
   const location = useLocation();
   const generatedData = location.state || {}; 
   // generatedData.questions — масив запитань, який передали з ProgressPage
+
+  useEffect(() => {
+  const sessionId = localStorage.getItem("sessionId");
+  if (!sessionId) return;
+
+  const ping = () => {
+    fetch(`http://localhost:5000/api/session/ping/${sessionId}`, {
+      method: "POST"
+    }).catch(() => {});
+  };
+
+  // пінг кожні 5 хвилин
+  const interval = setInterval(ping, 5 * 60 * 1000);
+
+  // очищення при закритті вкладки
+  window.addEventListener("beforeunload", ping);
+
+  return () => {
+    clearInterval(interval);
+    window.removeEventListener("beforeunload", ping);
+  };
+}, []);
+
 
 
 const handleExport = (format) => {

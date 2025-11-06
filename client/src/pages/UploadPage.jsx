@@ -133,6 +133,7 @@ const handleSubmit = async (e) => {
 
         <label style={styles.uploadBox}>
           <input
+            key={file ? file.name : "empty"}
             type="file"
             accept=".txt,.doc,.docx,.pdf"
             onChange={handleFileUpload}
