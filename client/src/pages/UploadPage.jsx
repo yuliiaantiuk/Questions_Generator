@@ -211,7 +211,7 @@ const styles = {
   },
   hintButton: {
     background: "none",
-    border: "none",
+    // border: "none",
     color: "#ccc",
     fontSize: "16px",
     cursor: "pointer",

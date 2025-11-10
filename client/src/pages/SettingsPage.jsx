@@ -227,17 +227,37 @@ const handleGenerationStart = () => {
           </button>
         </div>
       ) : (
-        <button style={styles.buttonSecondary} onClick={() => {
-          // Імітація генерації ключових слів (поки бекенд не готовий)
-          setKeywords(["освіта", "навчання", "піфагор", "математика", "інтелект"]);
-          setShowKeywords(true);
-        }}>
-          Показати ключові слова
-        </button>
+        <button
+  style={styles.buttonSecondary}
+  onClick={async () => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        alert("Не знайдено сесію. Завантажте файл або введіть текст спочатку.");
+        return;
+      }
+
+      const response = await fetch("http://localhost:5000/api/generate/keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (!response.ok) throw new Error("Не вдалося отримати ключові слова");
+
+      const data = await response.json();
+      setKeywords(data.keywords || []);
+      setShowKeywords(true);
+    } catch (error) {
+      console.error("Помилка при запиті ключових слів:", error);
+      alert("Не вдалося витягти ключові слова.");
+    }
+  }}
+  >
+  Показати ключові слова
+</button>
+
       )}
-
-
-
         <button
           style={{
             ...styles.button,

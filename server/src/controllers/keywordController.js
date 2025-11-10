@@ -3,8 +3,6 @@ import { extractKeywords } from "../services/keywordExtractor.js";
 import fs from "fs-extra";
 import path from "path";
 
-// Простий in-memory store для сесій (для dev). Якщо ти зберігаєш файли/тексти на диск,
-// uploadController має записати у sessions[sessionId] => { text, filePath }, щоб сюди звернутись.
 const sessions = global.__SESSIONS__ || (global.__SESSIONS__ = {});
 
 export const saveSessionText = (sessionId, text) => {

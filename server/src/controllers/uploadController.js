@@ -3,12 +3,13 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 import { createSession } from "../utils/sessionManager.js"; // додаємо менеджер сесій
+// import { TEMP_STORAGE } from "../config/paths.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// TEMP_STORAGE тепер завжди буде в server/temp
-const TEMP_STORAGE = path.join(__dirname, "..", "temp");
+const TEMP_STORAGE = path.join(__dirname, "..", "..", "temp");
+console.log("TEMP_STORAGE у uploadController:", TEMP_STORAGE);
 
 // перевіряємо, що директорія існує
 if (!fs.existsSync(TEMP_STORAGE)) {
