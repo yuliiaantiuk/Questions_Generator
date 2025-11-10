@@ -101,9 +101,10 @@ clearTempOnStartup();
 app.use("/api/tmp", express.static(TEMP_STORAGE));
 
 // підключаємо маршрути
-app.use("/api/generate", generateRoutes);
+// app.use("/api/generate", generateRoutes);
+app.use("/api/generate", keywordRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api", keywordRoutes);
+// app.use("/api", keywordRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on ${PORT}`));

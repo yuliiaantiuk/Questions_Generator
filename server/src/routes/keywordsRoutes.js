@@ -52,8 +52,11 @@ router.post("/keywords", async (req, res) => {
       return res.status(400).json({ error: "Файл порожній або нечитабельний" });
     }
 
+    console.log("extractKeywords() викликається!");
+
     // Витягуємо ключові слова
     const keywords = extractKeywords(textContent, 20);
+    console.log("Витягнуті ключові слова:", keywords);
 
     res.json({ keywords });
   } catch (error) {
