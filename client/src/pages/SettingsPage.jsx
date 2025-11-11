@@ -295,7 +295,6 @@ const styles = {
     flexDirection: "column",
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    padding: "20px",
     border: "2px dashed #ccc",
     borderRadius: "8px",
     padding: "30px"
@@ -315,7 +314,6 @@ const styles = {
   },
   hintButton: {
     background: "none",
-    border: "none",
     color: "#ccc",
     fontSize: "16px",
     cursor: "pointer",
