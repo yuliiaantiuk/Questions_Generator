@@ -324,3 +324,14 @@ async def save_keywords(
     session_keywords[session_id] = keywords
     logger.info(f"Оновлено ключові слова для session_id={session_id}")
     return {"status": "saved", "count": len(keywords)}
+
+# get keywords by session_id
+@app.get("/get_keywords/{session_id}")
+async def get_keywords(session_id: str):
+    if session_id in session_keywords:
+        keywords = session_keywords[session_id]
+        logger.info(f"Повертаю збережені ключові слова для session_id={session_id}, кількість: {len(keywords)}")
+        return keywords
+    else:
+        logger.info(f"Ключові слова не знайдені для session_id={session_id}")
+        return []
