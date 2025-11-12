@@ -20,6 +20,8 @@
     "natural": "^8.1.0",
     "node-fetch": "^3.3.2",
     "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^2.16.105",
+    "pdfreader": "^3.0.8",
     "rake-js": "^0.1.1",
     "stopword": "^3.1.5",
     "uuid": "^9.0.1"
