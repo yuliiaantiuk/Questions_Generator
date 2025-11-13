@@ -88,13 +88,12 @@ router.post("/", async (req, res) => {
     // Формуємо prompt, включаємо ключові слова та складність
     const keywordsStr = (selectedKeywords && selectedKeywords.length) ? selectedKeywords.join(", ") : "the main topics";
     const prompt = `
-Generate a set of test questions based on the following text.
-Difficulty level: ${difficulty}.
-Focus on key concepts: ${keywordsStr}.
-${showAnswers ? "Include correct answers after each question." : ""}
-Text:
-"""${text}"""
-Provide output as numbered questions.`;
+      Generate a set of test questions based on the following text.
+      Difficulty level: ${difficulty}.
+      Focus on key concepts: ${keywordsStr}.""}
+      Text:
+      """${text}"""
+      Provide output as numbered questions.`;
     // виклик HF
     const generated = await hfGenerateText(HF_MODEL, prompt, { maxTokens: 400, temperature: 0.1 });
 

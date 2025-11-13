@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
-import { createSession } from "../utils/sessionManager.js"; // додаємо менеджер сесій
-// import { TEMP_STORAGE } from "../config/paths.js";
+import { createSession } from "../utils/sessionManager.js"; 
+import { pdfToText } from "../utils/pdfToText.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,24 +42,85 @@ export const handleTextUpload = async (req, res) => {
 };
 
 // Збереження файлів (.txt, .doc, .pdf)
+// export const handleFileUpload = async (req, res) => {
+//   try {
+//     if (!req.file)
+//       return res.status(400).json({ error: "Файл не завантажено" });
+
+//     const sessionId = uuidv4();
+//     const ext = path.extname(req.file.originalname);
+
+//     if (ext === ".txt") {
+//       textContent = fs.readFileSync(filePath, "utf8");
+//     } else if (ext === ".pdf") {
+//       textContent = await pdfToText(filePath);
+//     } else if (ext === ".docx" || ext === ".doc") {
+//       const mammoth = (await import("mammoth")).default;
+//       textContent = (await mammoth.extractRawText({ path: filePath })).value;
+//     }
+
+//     const wordCount = textContent.trim().split(/\s+/).length;
+//     if (wordCount < 500 || wordCount > 1000000) {
+//       return res.status(400).json({ error: `Файл має ${wordCount} слів. Дозволено від 500 до 1 000 000.` });
+//     }
+
+//     const newFileName = `${sessionId}.txt`;
+//     const newPath = path.join(TEMP_STORAGE, newFileName);
+
+//     fs.renameSync(req.file.path, newPath);
+
+//     createSession(sessionId, newPath);
+
+//     res.status(200).json({ message: "Файл збережено", sessionId });
+//     console.log("Файл збережено у:", newPath);
+//   } catch (error) {
+//     console.error("Помилка збереження файлу:", error);
+//     res.status(500).json({ error: "Помилка збереження файлу" });
+//   }
+// };
+
 export const handleFileUpload = async (req, res) => {
   try {
     if (!req.file)
       return res.status(400).json({ error: "Файл не завантажено" });
 
     const sessionId = uuidv4();
-    const ext = path.extname(req.file.originalname);
-    const newFileName = `${sessionId}${ext}`;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+
+    // парсинг файлу до переміщення
+    let textContent = "";
+    if (ext === ".txt") {
+      textContent = fs.readFileSync(req.file.path, "utf8");
+    } else if (ext === ".pdf") {
+      textContent = await pdfToText(req.file.path);
+    } else if (ext === ".docx" || ext === ".doc") {
+      const mammoth = (await import("mammoth")).default;
+      textContent = (await mammoth.extractRawText({ path: req.file.path })).value;
+    }
+
+    const wordCount = textContent.trim().split(/\s+/).length;
+    if (wordCount < 500 || wordCount > 1000000) {
+      fs.unlinkSync(req.file.path); // видаляємо тимчасовий файл
+      return res.status(400).json({ 
+        error: `Файл має ${wordCount} слів. Дозволено від 500 до 1 000 000.` 
+      });
+    }
+
+    // переміщення файлу в TEMP_STORAGE
+    const newFileName = `${sessionId}.txt`;
     const newPath = path.join(TEMP_STORAGE, newFileName);
+    // fs.renameSync(req.file.path, newPath);
+    fs.writeFileSync(newPath, textContent, "utf8");
 
-    fs.renameSync(req.file.path, newPath);
-
+    // створення сесії 
     createSession(sessionId, newPath);
 
     res.status(200).json({ message: "Файл збережено", sessionId });
     console.log("Файл збережено у:", newPath);
+
   } catch (error) {
     console.error("Помилка збереження файлу:", error);
     res.status(500).json({ error: "Помилка збереження файлу" });
   }
 };
+

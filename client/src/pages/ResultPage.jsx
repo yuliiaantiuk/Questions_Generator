@@ -14,7 +14,7 @@ const ResultPage = () => {
   // generatedData.questions — масив запитань, який передали з ProgressPage
 
   useEffect(() => {
-  const sessionId = localStorage.getItem("sessionId");
+  const sessionId = sessionStorage.getItem("sessionId");
   if (!sessionId) return;
 
   const ping = () => {

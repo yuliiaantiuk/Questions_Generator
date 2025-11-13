@@ -4,7 +4,7 @@ import path from "path";
 import fetch from "node-fetch"; 
 import crypto from "crypto";
 import pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
-import { pdfToText } from "../utils/pdfToText.js";
+// import { pdfToText } from "../utils/pdfToText.js";
 
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
@@ -26,31 +26,46 @@ router.post("/keywords", async (req, res) => {
     }
 
     // Шукаємо файл користувача
+    console.log("TEMP_DIR:", TEMP_DIR);
+    console.log("Files in temp:", fs.readdirSync(TEMP_DIR));
+
     const files = fs.readdirSync(TEMP_DIR);
+
     const fileName = files.find(f => f.startsWith(fileSessionId));
     if (!fileName) return res.status(404).json({ error: "File not found" });
 
     const filePath = path.join(TEMP_DIR, fileName);
-    const ext = path.extname(filePath).toLowerCase();
+    // const ext = path.extname(filePath).toLowerCase();
+
+    let textContent = fs.readFileSync(filePath, "utf8");
+
+    console.log("Text length:", textContent.length);
 
     // Витягуємо текст залежно від формату
-    let textContent = "";
-    if (ext === ".txt") {
-      textContent = fs.readFileSync(filePath, "utf8");
-    } else if (ext === ".pdf") {
-      textContent = await pdfToText(filePath);
-    }
- else if (ext === ".docx" || ext === ".doc") {
-      const mammoth = (await import("mammoth")).default;
-      const data = await mammoth.extractRawText({ path: filePath });
-      textContent = data.value;
-    } else {
-      return res.status(400).json({ error: "Unsupported file type" });
-    }
+    // let textContent = "";
+    // if (ext === ".txt") {
+    //   textContent = fs.readFileSync(filePath, "utf8");
+    // } else if (ext === ".pdf") {
+    //   textContent = await pdfToText(filePath);
+    // } else if (ext === ".docx" || ext === ".doc") {
+    //   const mammoth = (await import("mammoth")).default;
+    //   const data = await mammoth.extractRawText({ path: filePath });
+    //   textContent = data.value;
+    // } else {
+    //   return res.status(400).json({ error: "Unsupported file type" });
+    // }
 
     if (!textContent || !textContent.trim()) {
       return res.status(400).json({ error: "Empty or unreadable file" });
     }
+
+    const wordCount = textContent.trim().split(/\s+/).length;
+    if (wordCount < 500 || wordCount > 1000000) {
+      return res.status(400).json({
+        error: `Файл має ${wordCount} слів. Дозволено від 500 до 1 000 000.`,
+      });
+    }
+
 
     // Генеруємо textSessionId для Python-кешу (MD5 тексту)
     const textSessionId = crypto.createHash("md5").update(textContent).digest("hex");

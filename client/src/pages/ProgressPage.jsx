@@ -19,23 +19,6 @@ const ProgressPage = () => {
     navigate("/");
   };
 
-  // useEffect(() => {
-  //   if (!isPaused) {
-  //     intervalRef.current = setInterval(() => {
-  //       setProgress((prev) => {
-  //         if (prev >= 100) {
-  //           clearInterval(intervalRef.current);
-  //           setTimeout(() => navigate("/result"), 500);
-  //           return 100;
-  //         }
-  //         return prev + 5;
-  //       });
-  //     }, 200);
-  //   }
-
-  //   return () => clearInterval(intervalRef.current);
-  // }, [isPaused, navigate]);
-
   useEffect(() => {
     // Симуляція генерації
     if (!isPaused) {
