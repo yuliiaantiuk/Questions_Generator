@@ -1,0 +1,109 @@
+{
+  "questions": [
+    {
+      "text": "Це демонстраційне запитання (Hugging Face API недоступне)",
+      "type": "singleChoice",
+      "options": [
+        "Варіант 1",
+        "Варіант 2",
+        "Варіант 3",
+        "Варіант 4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Демонстраційне пояснення"
+    },
+    {
+      "text": "Це демонстраційне запитання (Hugging Face API недоступне)",
+      "type": "singleChoice",
+      "options": [
+        "Варіант 1",
+        "Варіант 2",
+        "Варіант 3",
+        "Варіант 4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Демонстраційне пояснення"
+    },
+    {
+      "text": "Це демонстраційне запитання (Hugging Face API недоступне)",
+      "type": "singleChoice",
+      "options": [
+        "Варіант 1",
+        "Варіант 2",
+        "Варіант 3",
+        "Варіант 4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Демонстраційне пояснення"
+    },
+    {
+      "text": "Це демонстраційне запитання (Hugging Face API недоступне)",
+      "type": "singleChoice",
+      "options": [
+        "Варіант 1",
+        "Варіант 2",
+        "Варіант 3",
+        "Варіант 4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Демонстраційне пояснення"
+    },
+    {
+      "text": "Це демонстраційне запитання (Hugging Face API недоступне)",
+      "type": "singleChoice",
+      "options": [
+        "Варіант 1",
+        "Варіант 2",
+        "Варіант 3",
+        "Варіант 4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Демонстраційне пояснення"
+    },
+    {
+      "text": "Це демонстраційне запитання (Hugging Face API недоступне)",
+      "type": "multipleChoice",
+      "options": [
+        "Варіант 1",
+        "Варіант 2",
+        "Варіант 3",
+        "Варіант 4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Демонстраційне пояснення"
+    },
+    {
+      "text": "Це демонстраційне запитання (Hugging Face API недоступне)",
+      "type": "multipleChoice",
+      "options": [
+        "Варіант 1",
+        "Варіант 2",
+        "Варіант 3",
+        "Варіант 4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Демонстраційне пояснення"
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2025-11-14T10:21:44.166Z",
+    "totalQuestions": 7,
+    "difficulty": "medium",
+    "keywords": [
+      "модель",
+      "навчання",
+      "дані",
+      "текст",
+      "природний мова",
+      "мовний модель",
+      "метод",
+      "слово",
+      "використання",
+      "параметр"
+    ],
+    "singleChoice": 5,
+    "multipleChoice": 2,
+    "trueFalse": 0,
+    "shortAnswer": 0
+  }
+}

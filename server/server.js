@@ -104,6 +104,7 @@ app.use("/api/tmp", express.static(TEMP_STORAGE));
 // app.use("/api/generate", generateRoutes);
 app.use("/api/generate", keywordRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/questions", generateRoutes);
 // app.use("/api", keywordRoutes);
 
 const PORT = process.env.PORT || 5000;

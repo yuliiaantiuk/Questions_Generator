@@ -53,7 +53,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ВИПРАВЛЕНИЙ ШЛЯХ - тепер server/temp
 const TEMP_STORAGE = path.join(__dirname, "..", "..", "temp");
 console.log("TEMP_STORAGE у sessionManager:", TEMP_STORAGE);
 
@@ -63,6 +62,28 @@ const sessions = new Map(); // sessionId -> { filePath, lastActive }
 export function createSession(sessionId, filePath) {
   sessions.set(sessionId, { filePath, lastActive: Date.now() });
   console.log(`Створено сесію: ${sessionId}, файл: ${filePath}`);
+}
+
+// отримуємо сесію
+export function getSession(sessionId) {
+  if (sessions.has(sessionId)) {
+    // оновлюємо активність при зверненні
+    sessions.get(sessionId).lastActive = Date.now();
+    return sessions.get(sessionId);
+  }
+  return null;
+}
+
+// оновлюємо дані сесії
+export function updateSession(sessionId, newData) {
+  if (sessions.has(sessionId)) {
+    const session = sessions.get(sessionId);
+    session.data = { ...session.data, ...newData };
+    session.lastActive = Date.now();
+    console.log(`Оновлено сесію: ${sessionId}`);
+    return true;
+  }
+  return false;
 }
 
 // оновлюємо активність

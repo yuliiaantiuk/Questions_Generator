@@ -9,59 +9,114 @@ const ProgressPage = () => {
 
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [status, setStatus] = useState("starting");
   const intervalRef = useRef(null);
+  const sessionId = sessionStorage.getItem("sessionId");
 
-  const handlePauseResume = () => {
-    setIsPaused((prev) => !prev);
+    const fetchProgress = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/questions/progress/${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        setProgress(data.progress);
+        setStatus(data.status);
+        
+        if (data.status === "completed") {
+          // Переходимо на сторінку результатів
+          navigate("/result", { 
+            state: { 
+              questions: data.questions,
+              ...settings 
+            } 
+          });
+        } else if (data.status === "error") {
+          alert("Помилка генерації: " + data.error);
+          navigate("/settings");
+        } else if (data.status === "cancelled") {
+          navigate("/");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching progress:", error);
+    }
   };
 
-  const handleGenerationCancel = () => {
-    navigate("/");
+    const handlePauseResume = async () => {
+    try {
+      if (isPaused) {
+        await fetch(`http://localhost:5000/api/questions/resume/${sessionId}`, {
+          method: "PUT"
+        });
+        setIsPaused(false);
+      } else {
+        await fetch(`http://localhost:5000/api/questions/pause/${sessionId}`, {
+          method: "PUT"
+        });
+        setIsPaused(true);
+      }
+    } catch (error) {
+      console.error("Error pausing/resuming:", error);
+    }
+  };
+
+  const handleGenerationCancel = async () => {
+    try {
+      await fetch(`http://localhost:5000/api/questions/cancel/${sessionId}`, {
+        method: "DELETE"
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("Error cancelling generation:", error);
+    }
   };
 
   useEffect(() => {
-    // Симуляція генерації
-    if (!isPaused) {
-      intervalRef.current = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(intervalRef.current);
-
-            // Симулюємо отримання результатів із сервера (поки без бекенду)
-            setTimeout(() => {
-              const fakeResults = {
-                questions: [
-                  {
-                    text: "Що таке ШІ?",
-                    type: "shortAnswer",
-                    answer: ""
-                  },
-                  {
-                    text: "Які з наведених є мовами програмування?",
-                    type: "multipleChoice",
-                    options: ["Python", "HTML", "CSS", "Java"],
-                    correctIndexes: [0,3]
-                  },
-                  {
-                    text: "JavaScript є мовою програмування.",
-                    type: "trueFalse",
-                    correctAnswer: true
-                  },
-                ],
-              };
-
-              navigate("/result", { state: fakeResults });
-            }, 500);
-
-            return 100;
-          }
-          return prev + 5;
+    const startGeneration = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/questions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            ...settings
+          })
         });
-      }, 200);
-    }
 
-    return () => clearInterval(intervalRef.current);
-  }, [isPaused, navigate]);
+        if (!response.ok) {
+          throw new Error("Не вдалося запустити генерацію");
+        }
+      } catch (error) {
+        console.error("Error starting generation:", error);
+        alert("Помилка запуску генерації");
+        navigate("/settings");
+      }
+    };
+
+    startGeneration();
+  }, [sessionId, settings, navigate]);
+
+  // Інтервал для оновлення прогресу
+  useEffect(() => {
+    intervalRef.current = setInterval(fetchProgress, 2000);
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
+  const getStatusText = () => {
+    switch (status) {
+      case "starting": return "Запуск генерації...";
+      case "generating": return "Генерація питань...";
+      case "paused": return "Генерація призупинена";
+      case "completed": return "Генерація завершена";
+      case "error": return "Помилка генерації";
+      default: return "Генерація...";
+    }
+  };
 
 
   return (
@@ -89,6 +144,9 @@ const ProgressPage = () => {
           )}
         </div>
 
+        {/* Статус */}
+        <div style={styles.statusText}>{getStatusText()}</div>
+
         {/* Прогрес-бар */}
         <div style={styles.progressBar}>
           <div
@@ -102,10 +160,18 @@ const ProgressPage = () => {
         <p style={styles.progressText}>{progress}%</p>
 
         <div style={styles.buttonContainer}>
-          <button style={styles.button} onClick={handlePauseResume}>
+          <button 
+            style={styles.button} 
+            onClick={handlePauseResume}
+            disabled={status === "completed" || status === "error"}
+          >
             {isPaused ? "Продовжити" : "Пауза"}
           </button>
-          <button style={styles.button} onClick={handleGenerationCancel}>
+          <button 
+            style={styles.button} 
+            onClick={handleGenerationCancel}
+            disabled={status === "completed"}
+          >
             Скасувати
           </button>
         </div>

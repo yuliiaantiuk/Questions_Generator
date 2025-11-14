@@ -132,67 +132,6 @@ const handleExport = (format) => {
       <div style={styles.container}>
         <h1 style={styles.title}>Результат генерації:</h1>
 
-        {/* <h3 style={styles.text}>Запитання з однією відповіддю:</h3>
-        <div style={styles.optionContainer}>
-          <div>
-            <input type="radio" name="singleChoice" disabled checked/>
-            <label htmlFor="single-choice">Варіант 1</label>
-          </div>
-          <div>
-            <input type="radio" name="singleChoice" disabled />
-            <label htmlFor="multiple-choice">Варіант 2</label>
-          </div>
-          <div>
-            <input type="radio" name="singleChoice" disabled />
-            <label htmlFor="true-false">Варіант 3</label>
-          </div>
-          <div>
-            <input type="radio" name="singleChoice" disabled />
-            <label htmlFor="short-answer">Варіант 4</label>
-          </div>
-        </div>
-
-        <h3 style={styles.text}>Запитання з множинною відповіддю:</h3>
-        <div style={styles.optionContainer}>
-          <div>
-            <input type="checkbox" name="multiChoice1" disabled checked/>
-            <label htmlFor="single-choice-multi">Варіант 1</label>
-          </div>
-          <div>
-            <input type="checkbox" name="multiChoice2" disabled checked/>
-            <label htmlFor="multiple-choice-multi">Варіант 2</label>
-          </div>
-          <div>
-            <input type="checkbox" name="multiChoice3" disabled/>
-            <label htmlFor="true-false-multi">Варіант 3</label>
-          </div>
-          <div>
-            <input type="checkbox" name="multiChoice4" disabled/>
-            <label htmlFor="short-answer-multi">Варіант 4</label>
-          </div>
-        </div>
-
-        <h3 style={styles.text}>Твердження:</h3>
-        <div style={styles.optionContainer}>
-          <div>
-            <input type="radio" name="statements" disabled checked/>
-            <label htmlFor="statement1">Правда</label>
-          </div>
-          <div>
-            <input type="radio" name="statements" id="statement2" disabled/>
-            <label htmlFor="statement2">Неправда</label>
-          </div>
-        </div>
-
-        <h3 style={styles.text}>Коротка відповідь:</h3>
-        <textarea
-          placeholder="Напишіть текстом..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          style={styles.textarea}
-          disabled
-        /> */}
-
         {generatedData.questions?.map((q, index) => (
   <div key={index} style={styles.questionBlock}>
     <h3>Запитання {index + 1}:</h3>
@@ -401,3 +340,64 @@ const styles = {
 };
 
 export default ResultPage;
+
+/* <h3 style={styles.text}>Запитання з однією відповіддю:</h3>
+        <div style={styles.optionContainer}>
+          <div>
+            <input type="radio" name="singleChoice" disabled checked/>
+            <label htmlFor="single-choice">Варіант 1</label>
+          </div>
+          <div>
+            <input type="radio" name="singleChoice" disabled />
+            <label htmlFor="multiple-choice">Варіант 2</label>
+          </div>
+          <div>
+            <input type="radio" name="singleChoice" disabled />
+            <label htmlFor="true-false">Варіант 3</label>
+          </div>
+          <div>
+            <input type="radio" name="singleChoice" disabled />
+            <label htmlFor="short-answer">Варіант 4</label>
+          </div>
+        </div>
+
+        <h3 style={styles.text}>Запитання з множинною відповіддю:</h3>
+        <div style={styles.optionContainer}>
+          <div>
+            <input type="checkbox" name="multiChoice1" disabled checked/>
+            <label htmlFor="single-choice-multi">Варіант 1</label>
+          </div>
+          <div>
+            <input type="checkbox" name="multiChoice2" disabled checked/>
+            <label htmlFor="multiple-choice-multi">Варіант 2</label>
+          </div>
+          <div>
+            <input type="checkbox" name="multiChoice3" disabled/>
+            <label htmlFor="true-false-multi">Варіант 3</label>
+          </div>
+          <div>
+            <input type="checkbox" name="multiChoice4" disabled/>
+            <label htmlFor="short-answer-multi">Варіант 4</label>
+          </div>
+        </div>
+
+        <h3 style={styles.text}>Твердження:</h3>
+        <div style={styles.optionContainer}>
+          <div>
+            <input type="radio" name="statements" disabled checked/>
+            <label htmlFor="statement1">Правда</label>
+          </div>
+          <div>
+            <input type="radio" name="statements" id="statement2" disabled/>
+            <label htmlFor="statement2">Неправда</label>
+          </div>
+        </div>
+
+        <h3 style={styles.text}>Коротка відповідь:</h3>
+        <textarea
+          placeholder="Напишіть текстом..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          style={styles.textarea}
+          disabled
+        /> */
