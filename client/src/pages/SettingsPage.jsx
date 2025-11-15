@@ -12,8 +12,9 @@ const SettingsPage = () => {
   const [difficulty, setDifficulty] = useState("medium"); 
   const [keywords, setKeywords] = useState([]);
   const [showKeywords, setShowKeywords] = useState(false);
-  const [textSessionId, setTextSessionId] = useState(null); // НОВИЙ СТАН
-  const [hasGeneratedEmpty, setHasGeneratedEmpty] = useState(false); // НОВИЙ СТАН
+  const [textSessionId, setTextSessionId] = useState(null); 
+  const [hasGeneratedEmpty, setHasGeneratedEmpty] = useState(false); 
+  const [isLoadingKeywords, setIsLoadingKeywords] = useState(false);
 
   const totalQuestions =
     (Number(singleChoice) || 0) +
@@ -106,6 +107,9 @@ const SettingsPage = () => {
               Вкажіть кількість запитань кожного типу для генерації (<b>1 - 10</b>). Якщо ви не хочете генерувати запитання певного типу, введіть <b>0</b> або залиште відповідне поле пустим.
               <br />
               Загальна кількість запитань розраховується автоматично.
+              <br />
+              Натисність на кнопку <b>Показати ключові слова</b> щоб переглянути згенеровані ключові слова на основі ваших теоретичних відомостей. Ви можете видалити непотрібні ключові слова, натиснувши на червоний хрестик поруч із кожним словом.
+              Якщо ви видалите всі ключові слова, система спробує згенерувати нові при наступному натисканні кнопки.
             </div>
         )}
         <h3 style={styles.text}>Тип запитань:</h3>
@@ -231,7 +235,7 @@ const SettingsPage = () => {
         <div style={styles.keywordsBox}>
           <h3>Ключові слова:</h3>
           {keywords.length === 0 ? (
-            <p>Ключові слова ще не згенеровані.</p>
+            <p>Не вдалося згенерувати ключові слова для цього тексту. Або ви видалили всі ключові слова. Натисність на кнопку <b>Показати ключові слова</b> ще раз.</p>
           ) : (
             <div style={styles.keywordsList}>
               {keywords.map((word, index) => (
@@ -258,72 +262,74 @@ const SettingsPage = () => {
           </button>
         </div>
       ) : (
-        <button
-  style={styles.buttonSecondary}
-  onClick={async () => {
-    try {
-      const sessionId = sessionStorage.getItem("sessionId");
-      if (!sessionId) {
-        alert("Не знайдено сесію. Завантажте файл або введіть текст спочатку.");
-        navigate("/");
-        return;
-      }
+          <>
+            {isLoadingKeywords && (
+              <p style={{ color: "#888", marginBottom: "10px" }}>
+                Ключові слова генеруються. Це може зайняти трохи часу...
+              </p>
+            )}
 
-      // Визначаємо, чи потрібно генерувати нові ключові слова
-      const forceRegenerate = hasGeneratedEmpty && keywords.length === 0;
+            <button
+              style={styles.buttonSecondary}
+              onClick={async () => {
+                setIsLoadingKeywords(true);
+                try {
+                  const sessionId = sessionStorage.getItem("sessionId");
+                  if (!sessionId) {
+                    alert("Не знайдено сесію. Завантажте файл або введіть текст спочатку.");
+                    navigate("/");
+                    return;
+                  }
 
-      const response = await fetch("http://localhost:5000/api/generate/keywords", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          sessionId,
-          forceRegenerate 
-        }),
-      });
+                  const forceRegenerate = hasGeneratedEmpty && keywords.length === 0;
 
-      if (!response.ok) {
-        const data = await response.json();
-        alert(data.error || "Не вдалося отримати ключові слова.");
-         
-        setKeywords([]);
-        setShowKeywords(false);
+                  const response = await fetch("http://localhost:5000/api/generate/keywords", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                      sessionId,
+                      forceRegenerate 
+                    }),
+                  });
 
-        await fetch(`http://localhost:5000/api/upload/delete/${sessionId}`, {
-          method: "DELETE",
-        }).catch(() => {});
-        
-        navigate("/");
-        return;
-      }
+                  if (!response.ok) {
+                    const data = await response.json();
+                    alert(data.error || "Не вдалося отримати ключові слова.");
+                    
+                    setKeywords([]);
+                    setShowKeywords(false);
 
-      const data = await response.json();
-      
-      // Зберігаємо textSessionId для майбутніх оновлень
-      if (data.textSessionId) {
-        setTextSessionId(data.textSessionId);
-      }
-      
-      setKeywords(data.keywords || []);
-      
-      if (data.keywords && data.keywords.length === 0 && !data.fromCache) {
-        setHasGeneratedEmpty(true);
-      } else if (data.keywords && data.keywords.length > 0) {
-        setHasGeneratedEmpty(false);
-      }
-      
-      setShowKeywords(true);
-    } catch (error) {
-      console.error("Помилка при запиті ключових слів:", error);
-      alert("Не вдалося витягти ключові слова.");
-      navigate("/upload"); 
-    }
+                    await fetch(`http://localhost:5000/api/upload/delete/${sessionId}`, { method: "DELETE" });
+                    navigate("/");
+                    return;
+                  }
 
-  }}
-  >
-  Показати ключові слова
-</button>
+                  const data = await response.json();
 
-      )}
+                  if (data.textSessionId) setTextSessionId(data.textSessionId);
+
+                  setKeywords(data.keywords || []);
+
+                  if (data.keywords?.length === 0 && !data.fromCache) {
+                    setHasGeneratedEmpty(true);
+                  } else if (data.keywords?.length > 0) {
+                    setHasGeneratedEmpty(false);
+                  }
+
+                  setIsLoadingKeywords(false);
+                  setShowKeywords(true);
+                } catch (error) {
+                  setIsLoadingKeywords(false);
+                  console.error("Помилка при запиті ключових слів:", error);
+                  alert("Не вдалося витягти ключові слова.");
+                  navigate("/upload"); 
+                }
+              }}
+            >
+              Показати ключові слова
+            </button>
+          </>
+        )}
         <button
           style={{
             ...styles.button,
@@ -346,7 +352,6 @@ const styles = {
     padding: "0",
     margin: "0",
     width: "96vw",
-    height: "100vh",
     boxSizing: "border-box",
     display: "flex",
     justifyContent: "center",
@@ -428,17 +433,18 @@ const styles = {
     cursor: "pointer",
   },
   difficultyContainer: {
-  display: "flex",
-  justifyContent: "space-between",
-  width: "100%",
-  marginBottom: "20px",
+    display: "flex",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: "20px",
   },
   keywordsBox: {
-    // width: "100%",
+    width: "95%",
     border: "2px solid #f0f0f0",
     padding: "10px",
     borderRadius: "6px",
     marginBottom: "20px",
+    justifyContent: "center",
   },
   keywordsList: {
     display: "flex",

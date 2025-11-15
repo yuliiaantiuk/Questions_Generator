@@ -282,13 +282,9 @@ const styles = {
     cursor: "pointer",
   },
   disabledHint: {
-    color: "red",
     fontSize: "14px",
     marginBottom: "10px",
-    // backgroundColor: "#ccc",
-    // padding: "8px",
     borderRadius: "6px",
-    // color: "#333",
     color: "#ccc",
   },
   dangerButton: {

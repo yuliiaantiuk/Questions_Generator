@@ -1,0 +1,32 @@
+{
+  "used": [
+    "server\\package-lock.json",
+    "server\\package.json",
+    "server\\server.js",
+    "server\\src\\controllers\\uploadController.js",
+    "server\\src\\routes\\generateRoutes.js",
+    "server\\src\\routes\\keywordsRoutes.js",
+    "server\\src\\routes\\sessionRoutes.js",
+    "server\\src\\routes\\uploadRoutes.js",
+    "server\\src\\services\\openRouterService.js",
+    "server\\src\\services\\questionsGenerator.js",
+    "server\\src\\utils\\pdfToText.js",
+    "server\\src\\utils\\sessionManager.js",
+    "client\\src\\App.jsx",
+    "client\\src\\main.jsx",
+    "client\\src\\pages\\ProgressPage.jsx",
+    "client\\src\\pages\\ResultPage.jsx",
+    "client\\src\\pages\\SettingsPage.jsx",
+    "client\\src\\pages\\UploadPage.jsx",
+    "client\\src\\routes\\AppRouter.jsx"
+  ],
+  "unused": [
+    "server\\src\\config\\paths.js",
+    "server\\src\\routes\\resultsRoutes.js",
+    "server\\src\\tempQuestions\\1f019e05-a781-4e58-8e9a-10a792077bfb_results.json",
+    "server\\src\\tempQuestions\\2728a1b7-8bf4-4452-914d-1ef0d8829ec4_results.json",
+    "server\\src\\tempQuestions\\4fad8149-88ca-4610-86fa-af0925c4a211_results.json",
+    "server\\test_openrouter.js"
+  ],
+  "generated": "2025-11-15T10:34:06.442Z"
+}

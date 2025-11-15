@@ -3,8 +3,6 @@ import fs from "fs";
 import path from "path";
 import fetch from "node-fetch"; 
 import crypto from "crypto";
-import pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
-// import { pdfToText } from "../utils/pdfToText.js";
 
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
@@ -40,20 +38,6 @@ router.post("/keywords", async (req, res) => {
     let textContent = fs.readFileSync(filePath, "utf8");
 
     console.log("Text length:", textContent.length);
-
-    // Витягуємо текст залежно від формату
-    // let textContent = "";
-    // if (ext === ".txt") {
-    //   textContent = fs.readFileSync(filePath, "utf8");
-    // } else if (ext === ".pdf") {
-    //   textContent = await pdfToText(filePath);
-    // } else if (ext === ".docx" || ext === ".doc") {
-    //   const mammoth = (await import("mammoth")).default;
-    //   const data = await mammoth.extractRawText({ path: filePath });
-    //   textContent = data.value;
-    // } else {
-    //   return res.status(400).json({ error: "Unsupported file type" });
-    // }
 
     if (!textContent || !textContent.trim()) {
       return res.status(400).json({ error: "Empty or unreadable file" });
