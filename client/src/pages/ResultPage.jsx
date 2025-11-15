@@ -330,74 +330,9 @@ const styles = {
     border: "2px solid white",
   },
   questionBlock: {
-  // marginBottom: "20px",
-  // padding: "15px",
-  // border: "1px solid #ccc",
-  // borderRadius: "6px",
-  width: "90%",
+    width: "90%",
 },
 
 };
 
 export default ResultPage;
-
-/* <h3 style={styles.text}>Запитання з однією відповіддю:</h3>
-        <div style={styles.optionContainer}>
-          <div>
-            <input type="radio" name="singleChoice" disabled checked/>
-            <label htmlFor="single-choice">Варіант 1</label>
-          </div>
-          <div>
-            <input type="radio" name="singleChoice" disabled />
-            <label htmlFor="multiple-choice">Варіант 2</label>
-          </div>
-          <div>
-            <input type="radio" name="singleChoice" disabled />
-            <label htmlFor="true-false">Варіант 3</label>
-          </div>
-          <div>
-            <input type="radio" name="singleChoice" disabled />
-            <label htmlFor="short-answer">Варіант 4</label>
-          </div>
-        </div>
-
-        <h3 style={styles.text}>Запитання з множинною відповіддю:</h3>
-        <div style={styles.optionContainer}>
-          <div>
-            <input type="checkbox" name="multiChoice1" disabled checked/>
-            <label htmlFor="single-choice-multi">Варіант 1</label>
-          </div>
-          <div>
-            <input type="checkbox" name="multiChoice2" disabled checked/>
-            <label htmlFor="multiple-choice-multi">Варіант 2</label>
-          </div>
-          <div>
-            <input type="checkbox" name="multiChoice3" disabled/>
-            <label htmlFor="true-false-multi">Варіант 3</label>
-          </div>
-          <div>
-            <input type="checkbox" name="multiChoice4" disabled/>
-            <label htmlFor="short-answer-multi">Варіант 4</label>
-          </div>
-        </div>
-
-        <h3 style={styles.text}>Твердження:</h3>
-        <div style={styles.optionContainer}>
-          <div>
-            <input type="radio" name="statements" disabled checked/>
-            <label htmlFor="statement1">Правда</label>
-          </div>
-          <div>
-            <input type="radio" name="statements" id="statement2" disabled/>
-            <label htmlFor="statement2">Неправда</label>
-          </div>
-        </div>
-
-        <h3 style={styles.text}>Коротка відповідь:</h3>
-        <textarea
-          placeholder="Напишіть текстом..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          style={styles.textarea}
-          disabled
-        /> */
