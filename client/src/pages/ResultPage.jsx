@@ -89,17 +89,90 @@ const handleExport = (format) => {
     navigate("/settings");
   };
 
-  const handleSpeakAll = () => {
+//   const handleSpeakAll = () => {
+//   const synth = window.speechSynthesis;
+//   synth.cancel(); // скасувати попереднє озвучення
+
+//   generatedData.questions.forEach((q) => {
+//     const utter = new SpeechSynthesisUtterance(q.text);
+//     utter.lang = "uk-UA"; // українська мова
+//     synth.speak(utter);
+//   });
+// };
+
+const handleSpeakAll = () => {
   const synth = window.speechSynthesis;
-  synth.cancel(); // скасувати попереднє озвучення
+  
+  // Скасувати всі поточні озвучення
+  synth.cancel();
 
-  generatedData.questions.forEach((q) => {
-    const utter = new SpeechSynthesisUtterance(q.text);
-    utter.lang = "uk-UA"; // українська мова
-    synth.speak(utter);
-  });
+  // Чекаємо невелику затримку перед початком нового озвучення
+  setTimeout(() => {
+    // Отримуємо список доступних голосів
+    const voices = synth.getVoices();
+    
+    // Шукаємо український голос або схожий
+    const ukrainianVoice = voices.find(voice => 
+      voice.lang.includes('uk') || 
+      voice.lang.includes('UA') ||
+      voice.name.toLowerCase().includes('ukrainian')
+    );
+
+    // Якщо українського голосу немає, шукаємо схожі східноєвропейські голоси
+    const fallbackVoice = ukrainianVoice || 
+      voices.find(voice => voice.lang.includes('ru')) || // російський
+      voices.find(voice => voice.lang.includes('pl')) || // польський
+      voices.find(voice => voice.lang.includes('cs'));   // чеський
+
+    console.log('Доступні голоси:', voices);
+    console.log('Обраний голос:', fallbackVoice);
+
+    // Озвучуємо кожне питання з паузами
+    generatedData.questions.forEach((q, index) => {
+      setTimeout(() => {
+        const utter = new SpeechSynthesisUtterance();
+        
+        // Обробляємо текст для кращого озвучення
+        let textToSpeak = q.text
+          .replace(/ChatGPT/gi, 'Чат Джи Пі Ті') // Англійські абревіатури
+          .replace(/API/gi, 'А П І')
+          .replace(/JavaScript/gi, 'Джава Скрипт')
+          .replace(/OpenAI/gi, 'Опен А І')
+          .replace(/GPT/gi, 'Джі Пі Ті')
+          .replace(/HTML/gi, 'ХТ М Л')
+          .replace(/CSS/gi, 'Сі Ес Ес');
+        
+        utter.text = textToSpeak;
+        utter.lang = "uk-UA"; // Українська мова
+        
+        if (fallbackVoice) {
+          utter.voice = fallbackVoice;
+        }
+        
+        // Налаштування для кращої якості
+        utter.rate = 0.9;   // Трохи повільніше
+        utter.pitch = 1.0;  // Нормальна висота
+        utter.volume = 1.0; // Максимальна гучність
+
+        // Додаємо обробники подій для відладки
+        utter.onstart = () => {
+          console.log(`Початок озвучення питання ${index + 1}`);
+        };
+        
+        utter.onend = () => {
+          console.log(`Закінчення озвучення питання ${index + 1}`);
+        };
+        
+        utter.onerror = (event) => {
+          console.error(`Помилка озвучення питання ${index + 1}:`, event);
+        };
+
+        synth.speak(utter);
+        
+      }, index * 5000); // Пауза 5 секунд між питаннями
+    });
+  }, 100);
 };
-
 
   // Виправити форматування тексту для експорту
 

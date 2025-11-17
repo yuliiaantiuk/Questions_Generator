@@ -21,6 +21,7 @@ const ProgressPage = () => {
         
         setProgress(data.progress);
         setStatus(data.status);
+        setIsPaused(data.isPaused);
         
         if (data.status === "completed") {
           // Переходимо на сторінку результатів
@@ -42,18 +43,20 @@ const ProgressPage = () => {
     }
   };
 
-    const handlePauseResume = async () => {
+  const handlePauseResume = async () => {
     try {
       if (isPaused) {
         await fetch(`http://localhost:5000/api/questions/resume/${sessionId}`, {
           method: "PUT"
         });
         setIsPaused(false);
+        console.log("▶️ Спроба відновити генерацію");
       } else {
         await fetch(`http://localhost:5000/api/questions/pause/${sessionId}`, {
           method: "PUT"
         });
         setIsPaused(true);
+        console.log("⏸️ Спроба поставити на паузу");
       }
     } catch (error) {
       console.error("Error pausing/resuming:", error);

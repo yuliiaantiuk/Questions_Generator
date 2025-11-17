@@ -1,3 +1,112 @@
+// import axios from 'axios';
+// import dotenv from 'dotenv';
+// dotenv.config();
+
+// const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+// const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
+// const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-3.5-turbo';
+
+// if (!OPENROUTER_API_KEY) {
+//   console.warn('⚠️  OpenRouter API key not found. Please set OPENROUTER_API_KEY in .env');
+// }
+
+// /**
+//  * Основна функція для виклику OpenRouter API
+//  */
+// export async function callOpenRouter(prompt, options = {}) {
+//   if (!OPENROUTER_API_KEY) {
+//     throw new Error('OpenRouter API key not configured');
+//   }
+
+//   const {
+//     maxTokens = 800,
+//     temperature = 0.7,
+//     systemMessage = "Ти - AI-асистент для генерації тестових запитань. Завжди відповідай у валідному JSON форматі.",
+//     model = OPENROUTER_MODEL
+//   } = options;
+
+//   try {
+//     console.log(`🔄 Виклик OpenRouter API з моделлю: ${model}`);
+    
+//     const response = await axios.post(
+//       `${OPENROUTER_BASE_URL}/chat/completions`,
+//       {
+//         model: model,
+//         messages: [
+//           {
+//             role: "system",
+//             content: systemMessage
+//           },
+//           {
+//             role: "user",
+//             content: prompt
+//           }
+//         ],
+//         max_tokens: maxTokens,
+//         temperature: temperature,
+//         response_format: { type: "json_object" }
+//       },
+//       {
+//         headers: {
+//           'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+//           'Content-Type': 'application/json',
+//           'HTTP-Referer': 'http://localhost:5000', // Обов'язково для OpenRouter
+//           'X-Title': 'Test Questions Generator'
+//         },
+//         timeout: 60000 // 60 секунд таймаут
+//       }
+//     );
+
+//     console.log('✅ Успішний запит до OpenRouter API');
+    
+//     const content = response.data.choices[0].message.content;
+    
+//     // Спроба парсингу JSON
+//     try {
+//       return JSON.parse(content);
+//     } catch (parseError) {
+//       console.error('❌ Помилка парсингу JSON від OpenRouter:', content);
+//       throw new Error(`Невалідний JSON відповідь: ${content.substring(0, 200)}`);
+//     }
+
+//   } catch (error) {
+//     console.error('❌ Помилка виклику OpenRouter API:', error.response?.data || error.message);
+    
+//     if (error.response?.status === 401) {
+//       throw new Error('Невірний API ключ OpenRouter');
+//     } else if (error.response?.status === 429) {
+//       throw new Error('Перевищено ліміт запитів до OpenRouter');
+//     } else if (error.code === 'ECONNABORTED') {
+//       throw new Error('Таймаут підключення до OpenRouter');
+//     } else {
+//       throw new Error(`Помилка OpenRouter: ${error.response?.data?.error?.message || error.message}`);
+//     }
+//   }
+// }
+
+// /**
+//  * Допоміжна функція для перевірки доступності API
+//  */
+// export async function checkOpenRouterAvailability() {
+//   try {
+//     const response = await axios.get(
+//       `${OPENROUTER_BASE_URL}/models`,
+//       {
+//         headers: {
+//           'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+//         },
+//         timeout: 10000
+//       }
+//     );
+    
+//     console.log('✅ OpenRouter API доступне');
+//     return true;
+//   } catch (error) {
+//     console.error('❌ OpenRouter API недоступне:', error.response?.data || error.message);
+//     return false;
+//   }
+// }
+
 import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -10,8 +119,39 @@ if (!OPENROUTER_API_KEY) {
   console.warn('⚠️  OpenRouter API key not found. Please set OPENROUTER_API_KEY in .env');
 }
 
+// Кеш для уникнення дублювання питань
+const questionCache = new Set();
+
 /**
- * Основна функція для виклику OpenRouter API
+ * Генерує унікальний ідентифікатор для питання
+ */
+function generateQuestionHash(questionText, questionType) {
+  return `${questionType}_${questionText.substring(0, 50).replace(/\s+/g, '_')}`;
+}
+
+/**
+ * Перевіряє, чи не було вже згенеровано схоже питання
+ */
+function isQuestionUnique(questionText, questionType) {
+  const hash = generateQuestionHash(questionText, questionType);
+  if (questionCache.has(hash)) {
+    console.log(`🔄 Пропускаємо дубльоване питання: ${questionText.substring(0, 50)}...`);
+    return false;
+  }
+  questionCache.add(hash);
+  return true;
+}
+
+/**
+ * Очищає кеш питань
+ */
+export function clearQuestionCache() {
+  questionCache.clear();
+  console.log('🧹 Кеш питань очищено');
+}
+
+/**
+ * Основна функція для виклику OpenRouter API з покращеними промптами
  */
 export async function callOpenRouter(prompt, options = {}) {
   if (!OPENROUTER_API_KEY) {
@@ -19,14 +159,16 @@ export async function callOpenRouter(prompt, options = {}) {
   }
 
   const {
-    maxTokens = 1000,
+    maxTokens = 800,
     temperature = 0.7,
-    systemMessage = "Ти - AI-асистент для генерації тестових запитань. Завжди відповідай у валідному JSON форматі.",
-    model = OPENROUTER_MODEL
+    systemMessage = "Ти - AI-асистент для генерації тестових запитань. Завжди відповідай у валідному JSON форматі. Створюй різноманітні питання, що охоплюють різні аспекти тексту.",
+    model = OPENROUTER_MODEL,
+    uniqueCheck = true,
+    questionType = 'unknown'
   } = options;
 
   try {
-    console.log(`🔄 Виклик OpenRouter API з моделлю: ${model}`);
+    console.log(`🔄 Виклик OpenRouter API для ${questionType} (temperature: ${temperature})`);
     
     const response = await axios.post(
       `${OPENROUTER_BASE_URL}/chat/completions`,
@@ -35,7 +177,7 @@ export async function callOpenRouter(prompt, options = {}) {
         messages: [
           {
             role: "system",
-            content: systemMessage
+            content: systemMessage + " Створюй унікальні питання, що не повторюються. Зосередься на різних частинах тексту та аспектах теми."
           },
           {
             role: "user",
@@ -50,10 +192,10 @@ export async function callOpenRouter(prompt, options = {}) {
         headers: {
           'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'http://localhost:5000', // Обов'язково для OpenRouter
+          'HTTP-Referer': 'http://localhost:5000',
           'X-Title': 'Test Questions Generator'
         },
-        timeout: 60000 // 60 секунд таймаут
+        timeout: 60000
       }
     );
 
@@ -61,10 +203,21 @@ export async function callOpenRouter(prompt, options = {}) {
     
     const content = response.data.choices[0].message.content;
     
-    // Спроба парсингу JSON
     try {
-      return JSON.parse(content);
+      const parsedResponse = JSON.parse(content);
+      
+      // Перевірка унікальності питання
+      if (uniqueCheck && parsedResponse.text) {
+        if (!isQuestionUnique(parsedResponse.text, questionType)) {
+          throw new Error('DUPLICATE_QUESTION');
+        }
+      }
+      
+      return parsedResponse;
     } catch (parseError) {
+      if (parseError.message === 'DUPLICATE_QUESTION') {
+        throw parseError;
+      }
       console.error('❌ Помилка парсингу JSON від OpenRouter:', content);
       throw new Error(`Невалідний JSON відповідь: ${content.substring(0, 200)}`);
     }
@@ -72,7 +225,9 @@ export async function callOpenRouter(prompt, options = {}) {
   } catch (error) {
     console.error('❌ Помилка виклику OpenRouter API:', error.response?.data || error.message);
     
-    if (error.response?.status === 401) {
+    if (error.message === 'DUPLICATE_QUESTION') {
+      throw error; // Перекидаємо далі для обробки
+    } else if (error.response?.status === 401) {
       throw new Error('Невірний API ключ OpenRouter');
     } else if (error.response?.status === 429) {
       throw new Error('Перевищено ліміт запитів до OpenRouter');
