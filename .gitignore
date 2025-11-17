@@ -16,3 +16,9 @@ Thumbs.db
 # Env files
 .env
 .env.local
+
+# Other
+server/temp/
+tempQuestions/
+server/audio/
+

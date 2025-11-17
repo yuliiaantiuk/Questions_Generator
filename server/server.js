@@ -5,6 +5,7 @@ import uploadRoutes from "./src/routes/uploadRoutes.js";
 import sessionRoutes from "./src/routes/sessionRoutes.js";
 import fs from "fs";
 import keywordRoutes from "./src/routes/keywordsRoutes.js";
+import ttsRoutes from "./src/routes/ttsRoutes.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -48,7 +49,6 @@ function clearTempOnStartup() {
   }
 }
 
-
 clearTempOnStartup();
 
 app.use("/api/tmp", express.static(TEMP_STORAGE));
@@ -58,6 +58,7 @@ app.use("/api/tmp", express.static(TEMP_STORAGE));
 app.use("/api/generate", keywordRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/questions", generateRoutes);
+app.use("/api/tts", ttsRoutes);
 // app.use("/api", keywordRoutes);
 
 const PORT = process.env.PORT || 5000;

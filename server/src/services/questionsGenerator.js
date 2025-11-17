@@ -1309,7 +1309,6 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
   return generatedQuestions;
 }
 
-// 🎯 ФУНКЦІЇ ГЕНЕРАЦІЇ ПИТАНЬ (БЕЗ ЗМІН)
 async function generateSingleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount) {
   const prompt = createSingleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount);
   const response = await callOpenRouter(prompt, {
@@ -1357,7 +1356,7 @@ function createSingleChoicePrompt(text, difficulty, keywords, currentIndex, tota
 ТЕКСТ:
 ${truncatedText}
 
-КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
+За можливості використовуй такі КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
 РІВЕНЬ СКЛАДНОСТІ: ${difficulty.toUpperCase()}
 
 СПЕЦИФІЧНІ ВИМОГИ ДЛЯ ${difficulty.toUpperCase()} РІВНЯ:
@@ -1394,7 +1393,7 @@ function createMultipleChoicePrompt(text, difficulty, keywords, currentIndex, to
 ТЕКСТ:
 ${truncatedText}
 
-КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
+За можливості використовуй такі КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
 РІВЕНЬ СКЛАДНОСТІ: ${difficulty.toUpperCase()}
 
 СПЕЦИФІЧНІ ВИМОГИ ДЛЯ ${difficulty.toUpperCase()} РІВНЯ:
@@ -1432,7 +1431,7 @@ function createTrueFalsePrompt(text, difficulty, keywords, currentIndex, totalCo
 ТЕКСТ:
 ${truncatedText}
 
-КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
+За можливості використовуй такі КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
 РІВЕНЬ СКЛАДНОСТІ: ${difficulty.toUpperCase()}
 
 СПЕЦИФІЧНІ ВИМОГИ ДЛЯ ${difficulty.toUpperCase()} РІВНЯ:
@@ -1469,7 +1468,7 @@ function createShortAnswerPrompt(text, difficulty, keywords, currentIndex, total
 ТЕКСТ:
 ${truncatedText}
 
-КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
+За можливості використовуй такі КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
 РІВЕНЬ СКЛАДНОСТІ: ${difficulty.toUpperCase()}
 
 СПЕЦИФІЧНІ ВИМОГИ ДЛЯ ${difficulty.toUpperCase()} РІВНЯ:

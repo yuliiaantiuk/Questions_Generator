@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import { ttsClient } from "../services/ttsService";
 
 const ResultPage = () => {
   const [text, setText] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState("pdf"); // початковий формат
   const [includeAnswers, setIncludeAnswers] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,81 +101,30 @@ const handleExport = (format) => {
 //   });
 // };
 
-const handleSpeakAll = () => {
-  const synth = window.speechSynthesis;
-  
-  // Скасувати всі поточні озвучення
-  synth.cancel();
+  const handleSpeakAll = async () => {
+    if (!generatedData.questions || generatedData.questions.length === 0) {
+      alert('Немає запитань для озвучення');
+      return;
+    }
 
-  // Чекаємо невелику затримку перед початком нового озвучення
-  setTimeout(() => {
-    // Отримуємо список доступних голосів
-    const voices = synth.getVoices();
-    
-    // Шукаємо український голос або схожий
-    const ukrainianVoice = voices.find(voice => 
-      voice.lang.includes('uk') || 
-      voice.lang.includes('UA') ||
-      voice.name.toLowerCase().includes('ukrainian')
-    );
+    setIsSpeaking(true);
 
-    // Якщо українського голосу немає, шукаємо схожі східноєвропейські голоси
-    const fallbackVoice = ukrainianVoice || 
-      voices.find(voice => voice.lang.includes('ru')) || // російський
-      voices.find(voice => voice.lang.includes('pl')) || // польський
-      voices.find(voice => voice.lang.includes('cs'));   // чеський
+    try {
+      const orderedQuestions = (generatedData.questions || []).map((q, i) => ({ ...q, __playOrder: i }));
+      await ttsClient.speakAllQuestions(orderedQuestions);
+    } catch (error) {
+      console.error('Озвучення не вдалося:', error);
+      alert('Помилка озвучення: ' + error.message);
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
 
-    console.log('Доступні голоси:', voices);
-    console.log('Обраний голос:', fallbackVoice);
+  const handleStopSpeaking = () => {
+    ttsClient.stopAll();
+    setIsSpeaking(false);
+  };
 
-    // Озвучуємо кожне питання з паузами
-    generatedData.questions.forEach((q, index) => {
-      setTimeout(() => {
-        const utter = new SpeechSynthesisUtterance();
-        
-        // Обробляємо текст для кращого озвучення
-        let textToSpeak = q.text
-          .replace(/ChatGPT/gi, 'Чат Джи Пі Ті') // Англійські абревіатури
-          .replace(/API/gi, 'А П І')
-          .replace(/JavaScript/gi, 'Джава Скрипт')
-          .replace(/OpenAI/gi, 'Опен А І')
-          .replace(/GPT/gi, 'Джі Пі Ті')
-          .replace(/HTML/gi, 'ХТ М Л')
-          .replace(/CSS/gi, 'Сі Ес Ес');
-        
-        utter.text = textToSpeak;
-        utter.lang = "uk-UA"; // Українська мова
-        
-        if (fallbackVoice) {
-          utter.voice = fallbackVoice;
-        }
-        
-        // Налаштування для кращої якості
-        utter.rate = 0.9;   // Трохи повільніше
-        utter.pitch = 1.0;  // Нормальна висота
-        utter.volume = 1.0; // Максимальна гучність
-
-        // Додаємо обробники подій для відладки
-        utter.onstart = () => {
-          console.log(`Початок озвучення питання ${index + 1}`);
-        };
-        
-        utter.onend = () => {
-          console.log(`Закінчення озвучення питання ${index + 1}`);
-        };
-        
-        utter.onerror = (event) => {
-          console.error(`Помилка озвучення питання ${index + 1}:`, event);
-        };
-
-        synth.speak(utter);
-        
-      }, index * 5000); // Пауза 5 секунд між питаннями
-    });
-  }, 100);
-};
-
-  // Виправити форматування тексту для експорту
 
   const generateExportContent = () => {
     let content = "Результат генерації запитань:\n\n";
@@ -255,7 +205,12 @@ const handleSpeakAll = () => {
         <div className="buttons" style={styles.buttonContainer}>
           <button style={styles.button} onClick={() => setShowExportModal(true)}>Експорт</button>
           <button style={styles.button} onClick={handleRepeatGeneration}>Повторити генерацію</button>
-          <button style={styles.button} onClick={handleSpeakAll}>Озвучити запитання</button>
+          <button 
+            style={styles.button} 
+            onClick={isSpeaking ? handleStopSpeaking : handleSpeakAll}
+          >
+            {isSpeaking ? 'Зупинити озвучення' : 'Озвучити запитання'}
+          </button>
         </div>
       </div>
 
@@ -296,6 +251,14 @@ const handleSpeakAll = () => {
                   checked={exportFormat === "html"}
                   onChange={(e) => setExportFormat(e.target.value)}
                 /> Спрощений HTML-файл (.html)
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="png"
+                  checked={exportFormat === "png"}
+                  onChange={(e) => setExportFormat(e.target.value)}
+                /> ZIP Архів файл .png
               </label>
               <label>
                 <input
