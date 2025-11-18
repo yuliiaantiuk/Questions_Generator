@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ttsClient } from "../services/ttsService";
-// import { ttsClient } from "../services/ttsService";
+import {
+  exportTXT,
+  exportDOC,
+  exportHTML,
+  exportPDF,
+  exportPNGZip
+} from "../services/exportService";
+
 
 const ResultPage = () => {
   const navigate = useNavigate();
@@ -10,9 +17,11 @@ const ResultPage = () => {
 
   const [text, setText] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
-  const [exportFormat, setExportFormat] = useState("pdf"); // початковий формат
+  const [exportFormat, setExportFormat] = useState("pdf");
   const [includeAnswers, setIncludeAnswers] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [exportProgress, setExportProgress] = useState({ percent: 0, message: "" });
+  const [isExporting, setIsExporting] = useState(false);
   const [speakingStates, setSpeakingStates] = useState(() =>
   generatedData.questions?.map(() => false)
 );
@@ -70,53 +79,44 @@ const toggleSpeaking = async (index, question) => {
 };
 
 
-const handleExport = (format) => {
-  const content = generateExportContent(); // формуємо текст
-  const blobOptions = { type: "text/plain;charset=utf-8" };
-
-  let blob;
-  let fileName = `questions.${format}`;
-
-  switch (format) {
-    case "txt":
-      blob = new Blob([content], blobOptions);
-      break;
-    case "doc":
-      blob = new Blob(
-        [`<html><body><pre>${content}</pre></body></html>`],
-        { type: "application/msword" }
-      );
-      break;
-    case "html":
-      blob = new Blob(
-        [`<html><body><h2>Результат генерації</h2><pre>${content}</pre></body></html>`],
-        { type: "text/html" }
-      );
-      break;
-    case "pdf":
-      // якщо pdf — використовуємо jsPDF
-      import("jspdf").then(({ jsPDF }) => {
-        const doc = new jsPDF();
-        const lines = doc.splitTextToSize(content, 180);
-        doc.text(lines, 10, 10);
-        doc.save("questions.pdf");
-      });
-      setShowExportModal(false);
-      return;
-    default:
-      blob = new Blob([content], blobOptions);
+const handleExport = async (format) => {
+  if (!generatedData.questions || generatedData.questions.length === 0) {
+    alert("Немає запитань для експорту");
+    return;
   }
 
-  // створюємо посилання для завантаження
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
+  setIsExporting(true);
+  setExportProgress({ percent: 0, message: "Починаю..." });
 
-  setShowExportModal(false);
+  const questions = generatedData.questions;
+  try {
+    if (format === "txt") {
+      exportTXT(questions, includeAnswers, "questions.txt");
+      setExportProgress({ percent: 100, message: "Готово" });
+    } else if (format === "doc") {
+      exportDOC(questions, includeAnswers, "questions.doc");
+      setExportProgress({ percent: 100, message: "Готово" });
+    } else if (format === "html") {
+      exportHTML(questions, includeAnswers, "questions.html");
+      setExportProgress({ percent: 100, message: "Готово" });
+    } else if (format === "pdf") {
+      await exportPDF(questions, includeAnswers, "questions.pdf", (p, m) => setExportProgress({ percent: p, message: m }));
+    } else if (format === "png") {
+      await exportPNGZip(questions, includeAnswers, "questions_images.zip", (p, m) => setExportProgress({ percent: p, message: m }));
+    }
+    setTimeout(() => {
+      setExportProgress({ percent: 0, message: "" });
+    }, 1200);
+  } catch (err) {
+    console.error("Export error:", err);
+    alert("Помилка експорту: " + err.message);
+    setExportProgress({ percent: 0, message: "" });
+  } finally {
+    setIsExporting(false);
+    setShowExportModal(false);
+  }
 };
+
 
   const handleRepeatGeneration = () => {
     navigate("/settings");
@@ -310,6 +310,14 @@ const handleExport = (format) => {
                 /> Показувати правильні відповіді
               </label>
             </div>
+            {isExporting && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ height: 10, width: "100%", background: "#333", borderRadius: 4 }}>
+                  <div style={{ height: "100%", width: `${exportProgress.percent}%`, background: "#0a0", borderRadius: 4 }} />
+                </div>
+                <div style={{ marginTop: 6, color: "#fff", fontSize: 12 }}>{exportProgress.message} ({exportProgress.percent}%)</div>
+              </div>
+            )}
             <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
               <button style={{ ...styles.button, ...styles.buttonWhiteOutline }} onClick={() => handleExport(exportFormat)}>Експортувати</button>
               <button style={{ ...styles.button, ...styles.buttonWhiteOutline }} onClick={() => setShowExportModal(false)}>Назад</button>

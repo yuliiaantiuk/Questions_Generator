@@ -7,7 +7,6 @@ import fs from "fs";
 import keywordRoutes from "./src/routes/keywordsRoutes.js";
 import ttsRoutes from "./src/routes/ttsRoutes.js";
 import dotenv from "dotenv";
-import ttsProxyRoutes from './src/routes/ttsProxyRoutes.js';
 dotenv.config();
 
 const app = express();
