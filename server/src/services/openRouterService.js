@@ -109,6 +109,8 @@
 
 import axios from 'axios';
 import dotenv from 'dotenv';
+import JSON5 from 'json5';
+
 dotenv.config();
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -204,6 +206,12 @@ export async function callOpenRouter(prompt, options = {}) {
     const content = response.data.choices[0].message.content;
     
     try {
+      // const safeContent = content
+      // .replace(/(\r\n|\n|\r)/gm, "\\n") 
+      // .replace(/\\?"/g, '\\"');
+
+      // const parsedResponse = JSON.parse(safeContent);
+
       const parsedResponse = JSON.parse(content);
       
       // Перевірка унікальності питання

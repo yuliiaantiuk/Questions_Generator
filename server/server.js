@@ -7,6 +7,7 @@ import fs from "fs";
 import keywordRoutes from "./src/routes/keywordsRoutes.js";
 import ttsRoutes from "./src/routes/ttsRoutes.js";
 import dotenv from "dotenv";
+import ttsProxyRoutes from './src/routes/ttsProxyRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -54,12 +55,10 @@ clearTempOnStartup();
 app.use("/api/tmp", express.static(TEMP_STORAGE));
 
 // підключаємо маршрути
-// app.use("/api/generate", generateRoutes);
 app.use("/api/generate", keywordRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/questions", generateRoutes);
 app.use("/api/tts", ttsRoutes);
-// app.use("/api", keywordRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on ${PORT}`));

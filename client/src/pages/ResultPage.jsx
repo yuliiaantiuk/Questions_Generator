@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ttsClient } from "../services/ttsService";
+// import { ttsClient } from "../services/ttsService";
 
 const ResultPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const generatedData = location.state || {}; 
+
   const [text, setText] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState("pdf"); // початковий формат
   const [includeAnswers, setIncludeAnswers] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
-
-  const navigate = useNavigate();
-  const location = useLocation();
-  const generatedData = location.state || {}; 
-  // generatedData.questions — масив запитань, який передали з ProgressPage
+  const [speakingStates, setSpeakingStates] = useState(() =>
+  generatedData.questions?.map(() => false)
+);
 
   useEffect(() => {
   const sessionId = sessionStorage.getItem("sessionId");
@@ -36,6 +39,35 @@ const ResultPage = () => {
   };
 }, []);
 
+const toggleSpeaking = async (index, question) => {
+  setSpeakingStates(prev => {
+    const updated = [...prev];
+
+    // якщо кнопка вже активна — зупиняємо
+    if (updated[index]) {
+      ttsClient.stopAll();
+      updated[index] = false;
+      return updated;
+    }
+
+    // вимикаємо всі інші
+    updated.fill(false);
+    updated[index] = true;
+
+    return updated;
+  });
+
+  try {
+    await ttsClient.speakQuestion(question);
+  } finally {
+    // після завершення озвучення — вимикаємо кнопку
+    setSpeakingStates(prev => {
+      const updated = [...prev];
+      updated[index] = false;
+      return updated;
+    });
+  }
+};
 
 
 const handleExport = (format) => {
@@ -102,25 +134,28 @@ const handleExport = (format) => {
 // };
 
   const handleSpeakAll = async () => {
-    if (!generatedData.questions || generatedData.questions.length === 0) {
-      alert('Немає запитань для озвучення');
-      return;
-    }
+      if (!generatedData.questions || generatedData.questions.length === 0) {
+        alert('Немає запитань для озвучення');
+        return;
+      }
 
-    setIsSpeaking(true);
+      setIsSpeaking(true);
+      console.log('🎯 Starting SERVER TTS playback');
 
-    try {
-      const orderedQuestions = (generatedData.questions || []).map((q, i) => ({ ...q, __playOrder: i }));
-      await ttsClient.speakAllQuestions(orderedQuestions);
-    } catch (error) {
-      console.error('Озвучення не вдалося:', error);
-      alert('Помилка озвучення: ' + error.message);
-    } finally {
-      setIsSpeaking(false);
-    }
-  };
+      try {
+        await ttsClient.speakAllQuestions(generatedData.questions);
+        console.log('✅ SERVER TTS playback completed successfully');
+      } catch (error) {
+        console.error('❌ SERVER TTS failed:', error);
+        alert('Помилка озвучення: ' + error.message);
+      } finally {
+        setIsSpeaking(false);
+      }
+    };
+
 
   const handleStopSpeaking = () => {
+    console.log('⏹️ User requested stop');
     ttsClient.stopAll();
     setIsSpeaking(false);
   };
@@ -156,61 +191,68 @@ const handleExport = (format) => {
         <h1 style={styles.title}>Результат генерації:</h1>
 
         {generatedData.questions?.map((q, index) => (
-  <div key={index} style={styles.questionBlock}>
-    <h3>Запитання {index + 1}:</h3>
-    <p>{q.text}</p>
+          <div key={index} style={styles.questionBlock}>
+            <h3>Запитання {index + 1}:</h3>
+            <button
+              style={{ marginLeft: "10px", padding: "4px 8px", cursor: "pointer" }}
+              onClick={() => toggleSpeaking(index, q)}
+            >
+              {speakingStates[index] ? "⏹️ Стоп" : "🔊"}
+            </button>
 
-    {q.type === "singleChoice" && (
-      <div style={styles.optionContainer}>
-        {q.options.map((opt, i) => (
-          <div key={i}>
-            <input type="radio" disabled checked={i === q.correctIndex} />
-            <label>{opt}</label>
-          </div>
-        ))}
-      </div>
-        )}
+            <p>{q.text}</p>
 
-        {q.type === "multipleChoice" && (
-          <div style={styles.optionContainer}>
-            {q.options.map((opt, i) => (
-              <div key={i}>
-                <input type="checkbox" disabled checked={q.correctIndexes.includes(i)} />
-                <label>{opt}</label>
+            {q.type === "singleChoice" && (
+              <div style={styles.optionContainer}>
+                {q.options.map((opt, i) => (
+                  <div key={i}>
+                    <input type="radio" disabled checked={i === q.correctIndex} />
+                    <label>{opt}</label>
+                  </div>
+                ))}
+              </div>
+                )}
+
+                {q.type === "multipleChoice" && (
+                  <div style={styles.optionContainer}>
+                    {q.options.map((opt, i) => (
+                      <div key={i}>
+                        <input type="checkbox" disabled checked={q.correctIndexes.includes(i)} />
+                        <label>{opt}</label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {q.type === "trueFalse" && (
+                  <div style={styles.optionContainer}>
+                    <div>
+                      <input type="radio" disabled checked={q.correctAnswer === true} />
+                      <label>Правда</label>
+                    </div>
+                    <div>
+                      <input type="radio" disabled checked={q.correctAnswer === false} />
+                      <label>Неправда</label>
+                    </div>
+                  </div>
+                )}
+
+                {q.type === "shortAnswer" && (
+                  <textarea value={q.answer || ""} disabled style={styles.textarea} />
+                )}
               </div>
             ))}
-          </div>
-        )}
-
-        {q.type === "trueFalse" && (
-          <div style={styles.optionContainer}>
-            <div>
-              <input type="radio" disabled checked={q.correctAnswer === true} />
-              <label>Правда</label>
-            </div>
-            <div>
-              <input type="radio" disabled checked={q.correctAnswer === false} />
-              <label>Неправда</label>
-            </div>
-          </div>
-        )}
-
-        {q.type === "shortAnswer" && (
-          <textarea value={q.answer || ""} disabled style={styles.textarea} />
-        )}
-      </div>
-    ))}
 
 
         <div className="buttons" style={styles.buttonContainer}>
           <button style={styles.button} onClick={() => setShowExportModal(true)}>Експорт</button>
           <button style={styles.button} onClick={handleRepeatGeneration}>Повторити генерацію</button>
-          <button 
+          {/* <button 
             style={styles.button} 
             onClick={isSpeaking ? handleStopSpeaking : handleSpeakAll}
           >
             {isSpeaking ? 'Зупинити озвучення' : 'Озвучити запитання'}
-          </button>
+          </button> */}
         </div>
       </div>
 
