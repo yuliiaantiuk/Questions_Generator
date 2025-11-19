@@ -171,7 +171,7 @@ const ProgressPage = () => {
             {isPaused ? "Продовжити" : "Пауза"}
           </button>
           <button 
-            style={styles.button} 
+            style={styles.buttonSecondary} 
             onClick={handleGenerationCancel}
             disabled={status === "completed"}
           >
@@ -188,7 +188,7 @@ const styles = {
     padding: "0",
     margin: "0",
     width: "96vw",
-    height: "100vh",
+    // height: "100vh",
     boxSizing: "border-box",
     display: "flex",
     justifyContent: "center",
@@ -247,11 +247,20 @@ const styles = {
     borderRadius: "6px",
     cursor: "pointer",
   },
+  buttonSecondary: {
+    background: "#3d3d3dff",
+    color: "white",
+    padding: "12px 20px",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    width: "100%",
+  },
   summaryBox: {
-  padding: "15px",
-  borderRadius: "8px",
-  width: "100%",
-  textAlign: "left",
+    padding: "15px",
+    borderRadius: "8px",
+    width: "100%",
+    textAlign: "left",
   },
   keywordsBox: {
     marginTop: "10px",

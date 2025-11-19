@@ -192,13 +192,15 @@ const handleExport = async (format) => {
 
         {generatedData.questions?.map((q, index) => (
           <div key={index} style={styles.questionBlock}>
-            <h3>Запитання {index + 1}:</h3>
-            <button
-              style={{ marginLeft: "10px", padding: "4px 8px", cursor: "pointer" }}
-              onClick={() => toggleSpeaking(index, q)}
-            >
-              {speakingStates[index] ? "⏹️ Стоп" : "🔊"}
-            </button>
+            <div style={styles.questionHeader}>
+                <h3>Запитання {index + 1}:</h3>
+                <button
+                  style={{ marginLeft: "10px", padding: "4px 8px", cursor: "pointer" }}
+                  onClick={() => toggleSpeaking(index, q)}
+                >
+                  {speakingStates[index] ? "⏹️ Стоп" : "🔊"}
+                </button>
+            </div>
 
             <p>{q.text}</p>
 
@@ -246,7 +248,7 @@ const handleExport = async (format) => {
 
         <div className="buttons" style={styles.buttonContainer}>
           <button style={styles.button} onClick={() => setShowExportModal(true)}>Експорт</button>
-          <button style={styles.button} onClick={handleRepeatGeneration}>Повторити генерацію</button>
+          <button style={styles.buttonSecondary} onClick={handleRepeatGeneration}>Повторити генерацію</button>
           {/* <button 
             style={styles.button} 
             onClick={isSpeaking ? handleStopSpeaking : handleSpeakAll}
@@ -307,6 +309,7 @@ const handleExport = async (format) => {
                   type="checkbox"
                   checked={includeAnswers}
                   onChange={(e) => setIncludeAnswers(e.target.checked)}
+                  style={styles.showAnswersCheckbox}
                 /> Показувати правильні відповіді
               </label>
             </div>
@@ -360,6 +363,13 @@ const styles = {
   text: {
     fontSize: "16px",
   },
+  questionHeader:{
+    display: "flex",
+    flexDirection: "row-reverse",
+    justifyContent: "flex-end",
+    gap: "16px",
+    alignItems: "center",
+  },
   optionContainer: {
     display: "flex",
     flexDirection: "column",
@@ -370,7 +380,8 @@ const styles = {
     boxSizing: "border-box",
     maxWidth: "100%",
     minWidth: "100%",
-    minHeight: "120px",
+    minHeight: "30px",
+    maxHeight: "30px",
     padding: "10px",
     borderRadius: "6px",
     border: "1px solid #ccc",
@@ -393,6 +404,15 @@ const styles = {
     borderRadius: "6px",
     cursor: "pointer",
   },
+  buttonSecondary: {
+    background: "#3d3d3dff",
+    color: "white",
+    padding: "12px 20px",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    width: "100%",
+  },
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -411,6 +431,9 @@ const styles = {
     borderRadius: "8px",
     width: "400px",
     textAlign: "left",
+  },
+  showAnswersCheckbox: {
+    marginTop: "15px",
   },
   buttonWhiteOutline: {
     border: "2px solid white",
