@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ВИПРАВЛЕНИЙ ШЛЯХ для multer - тепер server/temp
 const UPLOAD_DIR = path.join(__dirname, "..", "..", "temp");
 
 // Налаштування multer для завантаження файлів у папку temp

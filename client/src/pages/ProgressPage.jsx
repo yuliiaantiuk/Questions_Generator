@@ -188,7 +188,6 @@ const styles = {
     padding: "0",
     margin: "0",
     width: "96vw",
-    // height: "100vh",
     boxSizing: "border-box",
     display: "flex",
     justifyContent: "center",

@@ -187,7 +187,6 @@ const styles = {
     padding: "0",
     margin: "0",
     width: "96vw",
-    // height: "100vh",
     boxSizing: "border-box",
   },
   container: {
@@ -213,7 +212,6 @@ const styles = {
   },
   hintButton: {
     background: "none",
-    // border: "none",
     color: "#ccc",
     fontSize: "16px",
     cursor: "pointer",

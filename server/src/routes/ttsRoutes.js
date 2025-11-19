@@ -1,6 +1,5 @@
 import express from 'express';
 import ttsService from '../services/ttsService.js';
-import path from 'path';
 import fs from 'fs-extra';
 
 const router = express.Router();

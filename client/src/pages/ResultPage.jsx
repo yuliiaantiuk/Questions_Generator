@@ -51,78 +51,6 @@ const ResultPage = () => {
   };
 }, []);
 
-// const toggleSpeaking = async (index, question) => {
-//   setSpeakingStates(prev => {
-//     const updated = [...prev];
-
-//     // якщо кнопка вже активна — зупиняємо
-//     if (updated[index]) {
-//       ttsClient.stopAll();
-//       updated[index] = false;
-//       return updated;
-//     }
-
-//     // вимикаємо всі інші
-//     updated.fill(false);
-//     updated[index] = true;
-
-//     return updated;
-//   });
-
-//   try {
-//     await ttsClient.speakQuestion(question);
-//   } finally {
-//     // після завершення озвучення — вимикаємо кнопку
-//     setSpeakingStates(prev => {
-//       const updated = [...prev];
-//       updated[index] = false;
-//       return updated;
-//     });
-//   }
-// };
-
-// const handleSpeakAll = async () => {
-//   if (!generatedData.questions || generatedData.questions.length === 0) return;
-
-//   setIsSpeaking(true);
-//   speakingRef.current = true;
-
-//   setSpeakingStates(Array(generatedData.questions.length).fill(false));
-
-//   try {
-//     for (let i = 0; i < generatedData.questions.length; i++) {
-
-//       if (!speakingRef.current) break;
-
-//       setSpeakingStates(prev => {
-//         const updated = [...prev];
-//         updated.fill(false);
-//         updated[i] = true;
-//         return updated;
-//       });
-
-//       await ttsClient.speakQuestion(generatedData.questions[i]);
-
-//       setSpeakingStates(prev => {
-//         const updated = [...prev];
-//         updated[i] = false;
-//         return updated;
-//       });
-//     }
-//   } finally {
-//     setIsSpeaking(false);
-//     speakingRef.current = false;
-//     setSpeakingStates(Array(generatedData.questions.length).fill(false));
-//   }
-// };
-
-// const handleStopSpeaking = () => {
-//   speakingRef.current = false;
-//   ttsClient.stopAll();
-//   setIsSpeaking(false);
-//   setSpeakingStates(Array(generatedData.questions.length).fill(false));
-// };
-
 const toggleSpeaking = async (index, question) => {
   const currentlySpeakingIndex = speakingStates.findIndex(s => s);
 
@@ -259,43 +187,6 @@ const handleExport = async (format) => {
     navigate("/settings");
   };
 
-//   const handleSpeakAll = () => {
-//   const synth = window.speechSynthesis;
-//   synth.cancel(); // скасувати попереднє озвучення
-
-//   generatedData.questions.forEach((q) => {
-//     const utter = new SpeechSynthesisUtterance(q.text);
-//     utter.lang = "uk-UA"; // українська мова
-//     synth.speak(utter);
-//   });
-// };
-
-
-
-  const generateExportContent = () => {
-    let content = "Результат генерації запитань:\n\n";
-
-    content += "Запитання з однією відповіддю:\n";
-    content += includeAnswers
-      ? "✔ Варіант 1 (правильна відповідь)\nВаріант 2\nВаріант 3\nВаріант 4\n\n"
-      : "Варіант 1\nВаріант 2\nВаріант 3\nВаріант 4\n\n";
-
-    content += "Запитання з множинною відповіддю:\n";
-    content += includeAnswers
-      ? "✔ Варіант 1 (правильна)\n✔ Варіант 2 (правильна)\nВаріант 3\nВаріант 4\n\n"
-      : "Варіант 1\nВаріант 2\nВаріант 3\nВаріант 4\n\n";
-
-    content += "Твердження:\n";
-    content += includeAnswers
-      ? "✔ Правда (правильна відповідь)\nНеправда\n\n"
-      : "Правда\nНеправда\n\n";
-
-    content += "Коротка відповідь:\n";
-    content += "Твоя відповідь: " + (text || "—") + "\n\n";
-
-    return content;
-  };
-
   return (
     <div style={styles.contentWrapper}>
       <div style={styles.container}>
@@ -369,12 +260,6 @@ const handleExport = async (format) => {
         <div className="buttons" style={styles.buttonContainer}>
           <button style={styles.button} onClick={() => setShowExportModal(true)}>Експорт</button>
           <button style={styles.buttonSecondary} onClick={handleRepeatGeneration}>Повторити генерацію</button>
-          {/* <button 
-            style={styles.button} 
-            onClick={isSpeaking ? handleStopSpeaking : handleSpeakAll}
-          >
-            {isSpeaking ? 'Зупинити озвучення' : 'Озвучити запитання'}
-          </button> */}
         </div>
       </div>
 
