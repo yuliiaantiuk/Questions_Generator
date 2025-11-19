@@ -22,8 +22,11 @@ const ResultPage = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [exportProgress, setExportProgress] = useState({ percent: 0, message: "" });
   const [isExporting, setIsExporting] = useState(false);
+  const speakingRef = React.useRef(false);
+
   const [speakingStates, setSpeakingStates] = useState(() =>
   generatedData.questions?.map(() => false)
+  
 );
 
   useEffect(() => {
@@ -48,34 +51,168 @@ const ResultPage = () => {
   };
 }, []);
 
+// const toggleSpeaking = async (index, question) => {
+//   setSpeakingStates(prev => {
+//     const updated = [...prev];
+
+//     // якщо кнопка вже активна — зупиняємо
+//     if (updated[index]) {
+//       ttsClient.stopAll();
+//       updated[index] = false;
+//       return updated;
+//     }
+
+//     // вимикаємо всі інші
+//     updated.fill(false);
+//     updated[index] = true;
+
+//     return updated;
+//   });
+
+//   try {
+//     await ttsClient.speakQuestion(question);
+//   } finally {
+//     // після завершення озвучення — вимикаємо кнопку
+//     setSpeakingStates(prev => {
+//       const updated = [...prev];
+//       updated[index] = false;
+//       return updated;
+//     });
+//   }
+// };
+
+// const handleSpeakAll = async () => {
+//   if (!generatedData.questions || generatedData.questions.length === 0) return;
+
+//   setIsSpeaking(true);
+//   speakingRef.current = true;
+
+//   setSpeakingStates(Array(generatedData.questions.length).fill(false));
+
+//   try {
+//     for (let i = 0; i < generatedData.questions.length; i++) {
+
+//       if (!speakingRef.current) break;
+
+//       setSpeakingStates(prev => {
+//         const updated = [...prev];
+//         updated.fill(false);
+//         updated[i] = true;
+//         return updated;
+//       });
+
+//       await ttsClient.speakQuestion(generatedData.questions[i]);
+
+//       setSpeakingStates(prev => {
+//         const updated = [...prev];
+//         updated[i] = false;
+//         return updated;
+//       });
+//     }
+//   } finally {
+//     setIsSpeaking(false);
+//     speakingRef.current = false;
+//     setSpeakingStates(Array(generatedData.questions.length).fill(false));
+//   }
+// };
+
+// const handleStopSpeaking = () => {
+//   speakingRef.current = false;
+//   ttsClient.stopAll();
+//   setIsSpeaking(false);
+//   setSpeakingStates(Array(generatedData.questions.length).fill(false));
+// };
+
 const toggleSpeaking = async (index, question) => {
+  const currentlySpeakingIndex = speakingStates.findIndex(s => s);
+
+  // Якщо зараз йде озвучка саме цього питання
+  if (currentlySpeakingIndex === index) {
+    ttsClient.stopAll();
+    speakingRef.current = false;
+    setIsSpeaking(false);
+    setSpeakingStates(Array(generatedData.questions.length).fill(false));
+    return; // зупиняємо, нічого нового не запускаємо
+  }
+
+  // Якщо йде інше питання — зупиняємо його, але не виходимо
+  if (currentlySpeakingIndex !== -1 || speakingRef.current) {
+    ttsClient.stopAll();
+    speakingRef.current = false;
+    setIsSpeaking(false);
+    setSpeakingStates(Array(generatedData.questions.length).fill(false));
+  }
+
+  // Вмикаємо озвучку для нового питання
+  speakingRef.current = true;
+  setIsSpeaking(true);
   setSpeakingStates(prev => {
     const updated = [...prev];
-
-    // якщо кнопка вже активна — зупиняємо
-    if (updated[index]) {
-      ttsClient.stopAll();
-      updated[index] = false;
-      return updated;
-    }
-
-    // вимикаємо всі інші
     updated.fill(false);
     updated[index] = true;
-
     return updated;
   });
 
   try {
     await ttsClient.speakQuestion(question);
   } finally {
-    // після завершення озвучення — вимикаємо кнопку
+    speakingRef.current = false;
+    setIsSpeaking(false);
     setSpeakingStates(prev => {
       const updated = [...prev];
       updated[index] = false;
       return updated;
     });
   }
+};
+
+
+const handleSpeakAll = async () => {
+  if (!generatedData.questions || generatedData.questions.length === 0) return;
+
+  // Встановлюємо глобальний стан озвучення
+  setIsSpeaking(true);
+  speakingRef.current = true;
+
+  // Спочатку вимикаємо всі кнопки
+  setSpeakingStates(Array(generatedData.questions.length).fill(false));
+
+  try {
+    for (let i = 0; i < generatedData.questions.length; i++) {
+      // Якщо користувач натиснув "стоп" — перериваємо цикл
+      if (!speakingRef.current) break;
+
+      // Підсвічуємо кнопку поточного питання
+      setSpeakingStates(prev => {
+        const updated = [...prev];
+        updated.fill(false);
+        updated[i] = true;
+        return updated;
+      });
+
+      // Озвучуємо питання
+      await ttsClient.speakQuestion(generatedData.questions[i]);
+
+      // Після завершення вимикаємо кнопку
+      setSpeakingStates(prev => {
+        const updated = [...prev];
+        updated[i] = false;
+        return updated;
+      });
+    }
+  } finally {
+    // Після завершення всієї озвучки
+    speakingRef.current = false;
+    setIsSpeaking(false);
+    setSpeakingStates(Array(generatedData.questions.length).fill(false));
+  }
+};
+
+const handleStopSpeaking = () => {
+  speakingRef.current = false;           // глобальний стан
+  ttsClient.stopAll();                    // зупиняємо TTS
+  setIsSpeaking(false);                   // оновлюємо кнопку зверху
+  setSpeakingStates(Array(generatedData.questions.length).fill(false)); // вимикаємо всі індикатори
 };
 
 
@@ -133,32 +270,6 @@ const handleExport = async (format) => {
 //   });
 // };
 
-  const handleSpeakAll = async () => {
-      if (!generatedData.questions || generatedData.questions.length === 0) {
-        alert('Немає запитань для озвучення');
-        return;
-      }
-
-      setIsSpeaking(true);
-      console.log('🎯 Starting SERVER TTS playback');
-
-      try {
-        await ttsClient.speakAllQuestions(generatedData.questions);
-        console.log('✅ SERVER TTS playback completed successfully');
-      } catch (error) {
-        console.error('❌ SERVER TTS failed:', error);
-        alert('Помилка озвучення: ' + error.message);
-      } finally {
-        setIsSpeaking(false);
-      }
-    };
-
-
-  const handleStopSpeaking = () => {
-    console.log('⏹️ User requested stop');
-    ttsClient.stopAll();
-    setIsSpeaking(false);
-  };
 
 
   const generateExportContent = () => {
@@ -188,7 +299,16 @@ const handleExport = async (format) => {
   return (
     <div style={styles.contentWrapper}>
       <div style={styles.container}>
-        <h1 style={styles.title}>Результат генерації:</h1>
+        <div style={styles.questionHeader}>
+          <h1 style={styles.title}>Результат генерації:</h1>
+
+          <button
+            onClick={isSpeaking ? handleStopSpeaking : handleSpeakAll}
+            style={{ padding: "6px 12px", cursor: "pointer" }}
+          >
+            {isSpeaking ? "⏹️" : "🔊"}
+          </button>
+        </div>
 
         {generatedData.questions?.map((q, index) => (
           <div key={index} style={styles.questionBlock}>
