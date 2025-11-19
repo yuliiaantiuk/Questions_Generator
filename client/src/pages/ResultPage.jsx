@@ -143,7 +143,6 @@ const handleStopSpeaking = () => {
   setSpeakingStates(Array(generatedData.questions.length).fill(false)); // вимикаємо всі індикатори
 };
 
-
 const handleExport = async (format) => {
   if (!generatedData.questions || generatedData.questions.length === 0) {
     alert("Немає запитань для експорту");

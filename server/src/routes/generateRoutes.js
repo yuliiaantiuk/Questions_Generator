@@ -8,7 +8,7 @@ import { getSession, updateSession } from "../utils/sessionManager.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TEMP_STORAGE = path.join(__dirname, "..", "..", "..", "tempQuestions");
+const TEMP_STORAGE = path.join(__dirname, "..", "..", "tempQuestions");
 const router = express.Router();
 
 if (!fs.existsSync(TEMP_STORAGE)) {
