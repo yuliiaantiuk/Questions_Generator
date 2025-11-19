@@ -7,9 +7,11 @@
     "server\\src\\routes\\generateRoutes.js",
     "server\\src\\routes\\keywordsRoutes.js",
     "server\\src\\routes\\sessionRoutes.js",
+    "server\\src\\routes\\ttsRoutes.js",
     "server\\src\\routes\\uploadRoutes.js",
     "server\\src\\services\\openRouterService.js",
     "server\\src\\services\\questionsGenerator.js",
+    "server\\src\\services\\ttsService.js",
     "server\\src\\utils\\pdfToText.js",
     "server\\src\\utils\\sessionManager.js",
     "client\\src\\App.jsx",
@@ -18,7 +20,9 @@
     "client\\src\\pages\\ResultPage.jsx",
     "client\\src\\pages\\SettingsPage.jsx",
     "client\\src\\pages\\UploadPage.jsx",
-    "client\\src\\routes\\AppRouter.jsx"
+    "client\\src\\routes\\AppRouter.jsx",
+    "client\\src\\services\\exportService.js",
+    "client\\src\\services\\ttsService.js"
   ],
   "unused": [
     "server\\src\\config\\paths.js",
@@ -28,5 +32,5 @@
     "server\\src\\tempQuestions\\4fad8149-88ca-4610-86fa-af0925c4a211_results.json",
     "server\\test_openrouter.js"
   ],
-  "generated": "2025-11-15T10:34:06.442Z"
+  "generated": "2025-11-19T21:29:05.675Z"
 }
