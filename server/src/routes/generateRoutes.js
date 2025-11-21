@@ -17,7 +17,6 @@ if (!fs.existsSync(TEMP_STORAGE)) {
 
 const generationProgress = new Map();
 
-// 🕒 ТАЙМАУТ ПАУЗИ - 30 ХВИЛИН
 const PAUSE_TIMEOUT = 30 * 60 * 1000;
 
 // 📤 POST /api/questions - запуск генерації питань
