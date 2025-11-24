@@ -182,7 +182,7 @@ function createSingleChoicePrompt(text, difficulty, keywords, currentIndex, tota
 ТЕКСТ:
 ${truncatedText}
 
-За можливості використовуй такі КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
+Використовуй такі КЛЮЧОВІ СЛОВА: ${keywords.join(', ')}
 РІВЕНЬ СКЛАДНОСТІ: ${difficulty.toUpperCase()}
 
 СПЕЦИФІЧНІ ВИМОГИ ДЛЯ ${difficulty.toUpperCase()} РІВНЯ:
@@ -373,7 +373,7 @@ function getCognitiveFocus(difficulty, index) {
       "визначенні основних понять", 
       "переліку ключових елементів",
       "ідентифікації основних об'єктів",
-      "назвах та датах",
+      "назвах та датах (за можливості)",
       "простій класифікації",
       "основних характеристиках",
       "очевидних послідовностях"
