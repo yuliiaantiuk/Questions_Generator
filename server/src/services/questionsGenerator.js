@@ -19,6 +19,7 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
   const totalQuestions = singleChoice + multipleChoice + trueFalse + shortAnswer;
   let generatedQuestions = [];
   let completed = 0;
+  const existingQuestions = generatedQuestions.map(q => q.text);
 
   clearQuestionCache();
 
@@ -126,47 +127,55 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
   return generatedQuestions;
 }
 
-async function generateSingleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount) {
-  const prompt = createSingleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount);
+async function generateSingleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
+  const prompt = createSingleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
     temperature: getTemperatureByDifficulty(difficulty),
-    questionType: 'singleChoice'
+    questionType: 'singleChoice',
+    existingQuestions
   });
   return { ...response, type: 'singleChoice' };
 }
 
-async function generateMultipleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount) {
-  const prompt = createMultipleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount);
+async function generateMultipleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
+  const prompt = createMultipleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
     temperature: getTemperatureByDifficulty(difficulty),
-    questionType: 'multipleChoice'
+    questionType: 'multipleChoice',
+    existingQuestions
   });
   return { ...response, type: 'multipleChoice' };
 }
 
-async function generateTrueFalseQuestion(text, difficulty, keywords, currentIndex, totalCount) {
-  const prompt = createTrueFalsePrompt(text, difficulty, keywords, currentIndex, totalCount);
+async function generateTrueFalseQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
+  const prompt = createTrueFalsePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
     temperature: getTemperatureByDifficulty(difficulty),
-    questionType: 'trueFalse'
+    questionType: 'trueFalse',
+    existingQuestions
   });
   return { ...response, type: 'trueFalse' };
 }
 
-async function generateShortAnswerQuestion(text, difficulty, keywords, currentIndex, totalCount) {
-  const prompt = createShortAnswerPrompt(text, difficulty, keywords, currentIndex, totalCount);
+async function generateShortAnswerQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
+  const prompt = createShortAnswerPrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
     temperature: getTemperatureByDifficulty(difficulty),
-    questionType: 'shortAnswer'
+    questionType: 'shortAnswer',
+    existingQuestions
   });
   return { ...response, type: 'shortAnswer' };
 }
 
-function createSingleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount) {
+function createSingleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'singleChoice');
   const languageComplexity = getLanguageComplexity(difficulty);
   
+  const existingText = existingQuestions.length > 0
+    ? `НЕ генеруй питання, яке вже є у цьому списку:\n${existingQuestions.map((q,i) => `${i+1}. ${q}`).join('\n')}`
+    : '';
+
   return `
 Створи тестове запитання ${getDifficultyText(difficulty)} рівня з однією правильною відповіддю.
 
@@ -199,11 +208,15 @@ ${languageComplexity}
 `;
 }
 
-function createMultipleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount) {
+function createMultipleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'multipleChoice');
   const languageComplexity = getLanguageComplexity(difficulty);
   
+    const existingText = existingQuestions.length > 0
+    ? `НЕ генеруй питання, яке вже є у цьому списку:\n${existingQuestions.map((q,i) => `${i+1}. ${q}`).join('\n')}`
+    : '';
+
   return `
 Створи запитання ${getDifficultyText(difficulty)} рівня з множинним вибором.
 
@@ -237,11 +250,15 @@ ${languageComplexity}
 `;
 }
 
-function createTrueFalsePrompt(text, difficulty, keywords, currentIndex, totalCount) {
+function createTrueFalsePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'trueFalse');
   const languageComplexity = getLanguageComplexity(difficulty);
   
+    const existingText = existingQuestions.length > 0
+    ? `НЕ генеруй питання, яке вже є у цьому списку:\n${existingQuestions.map((q,i) => `${i+1}. ${q}`).join('\n')}`
+    : '';
+
   return `
 Створи твердження ${getDifficultyText(difficulty)} рівня для перевірки (Правда/Неправда).
 
@@ -274,11 +291,15 @@ ${languageComplexity}
 `;
 }
 
-function createShortAnswerPrompt(text, difficulty, keywords, currentIndex, totalCount) {
+function createShortAnswerPrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'shortAnswer');
   const languageComplexity = getLanguageComplexity(difficulty);
   
+    const existingText = existingQuestions.length > 0
+    ? `НЕ генеруй питання, яке вже є у цьому списку:\n${existingQuestions.map((q,i) => `${i+1}. ${q}`).join('\n')}`
+    : '';
+
   return `
 Створи запитання ${getDifficultyText(difficulty)} рівня з короткою відповіддю.
 
