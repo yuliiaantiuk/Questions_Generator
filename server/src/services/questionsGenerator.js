@@ -57,42 +57,54 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
     return false; // Продовжуємо генерацію
   };
 
-  // 🔄 ГЕНЕРАЦІЯ КОЖНОГО ТИПУ ПИТАНЬ З ПЕРЕВІРКОЮ ПАУЗИ
   const generateQuestionType = async (count, generator, typeName) => {
     for (let i = 0; i < count; i++) {
-      // 🔄 ПЕРЕВІРКА ПАУЗИ ПЕРЕД КОЖНИМ ПИТАННЯМ
       const shouldCancel = await waitIfPaused();
       if (shouldCancel) {
         console.log(`⏹️ Генерацію перервано через таймаут паузи. Згенеровано ${generatedQuestions.length} питань`);
-        return true; // Скасування через таймаут
+        return true;
       }
-      
-      // 🔄 ПЕРЕВІРКА СКАСУВАННЯ
+
       if (shouldStop && shouldStop()) {
         console.log(`⏹️ Генерацію скасовано. Згенеровано ${generatedQuestions.length} питань`);
-        return true; // Скасування користувачем
+        return true; 
       }
       
       try {
         const question = await generator(i, count);
         generatedQuestions.push(question);
         updateProgress();
-        await delay(1200); // Затримка між запитами
+        await delay(1200);
       } catch (error) {
-        if (error.message === 'DUPLICATE_QUESTION') {
-          console.log('🔄 Знайдено дубль, спробуємо згенерувати інше питання...');
+        // if (error.message === 'DUPLICATE_QUESTION') {
+        //   console.log('🔄 Знайдено дубль, спробуємо згенерувати інше питання...');
+        //   i--;
+        //   await delay(500);
+        //   continue;
+        // }
+        // console.error(`Помилка генерації питання ${typeName}:`, error);
+        // throw error;
+        if (error.message === "DUPLICATE_QUESTION") {
+          console.log("🔄 Знайдено дубль, генеруємо інше питання...");
           i--;
           await delay(500);
           continue;
         }
-        console.error(`Помилка генерації питання ${typeName}:`, error);
+
+        if (error.message === "INVALID_JSON") {
+          console.warn(`⚠️ Модель повернула невалідний JSON. Повторюємо генерацію...`);
+          i--;
+          await delay(800);
+          continue;
+        }
+
+        console.error(`❌ Неочікувана помилка генерації ${typeName}:`, error);
         throw error;
       }
     }
-    return false; // Успішно завершено
+    return false; 
   };
 
-  // 🎯 ГЕНЕРАЦІЯ КОЖНОГО ТИПУ ПИТАНЬ
   const generators = [
     { count: singleChoice, generator: (i, total) => generateSingleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'singleChoice' },
     { count: multipleChoice, generator: (i, total) => generateMultipleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'multipleChoice' },

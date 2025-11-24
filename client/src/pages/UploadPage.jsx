@@ -44,7 +44,7 @@ const UploadPage = () => {
     sessionStorage.setItem("sessionId", result.sessionId);
     navigate("/settings");
   } catch (error) {
-    alert(error.message);
+    alert("Cталася помилка при завантаженні даних. Будь ласка, спробуйте ще раз.");
   }
 };
 

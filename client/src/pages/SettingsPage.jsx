@@ -294,7 +294,8 @@ const SettingsPage = () => {
 
                   if (!response.ok) {
                     const data = await response.json();
-                    alert(data.error || "Не вдалося отримати ключові слова.");
+                    console.log("Помилка при отриманні ключових слів:", data.error);
+                    alert("Не вдалося отримати ключові слова.");
                     
                     setKeywords([]);
                     setShowKeywords(false);

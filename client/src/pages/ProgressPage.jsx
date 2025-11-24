@@ -32,7 +32,7 @@ const ProgressPage = () => {
             } 
           });
         } else if (data.status === "error") {
-          alert("Помилка генерації: " + data.error);
+          alert("Сталася неочікувана помилка генерації. Будь ласка, спробуйте пізніше.");
           navigate("/settings");
         } else if (data.status === "cancelled") {
           navigate("/");

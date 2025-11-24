@@ -145,7 +145,7 @@ const handleStopSpeaking = () => {
 
 const handleExport = async (format) => {
   if (!generatedData.questions || generatedData.questions.length === 0) {
-    alert("Немає запитань для експорту");
+    alert("Немає запитань для експортую");
     return;
   }
 
@@ -173,7 +173,7 @@ const handleExport = async (format) => {
     }, 1200);
   } catch (err) {
     console.error("Export error:", err);
-    alert("Помилка експорту: " + err.message);
+    alert("Сталася непередбачена помилка експорту. Будь ласка, спробуйте пізніше.");
     setExportProgress({ percent: 0, message: "" });
   } finally {
     setIsExporting(false);
