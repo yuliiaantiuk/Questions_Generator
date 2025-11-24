@@ -2,6 +2,9 @@ import { callOpenRouter, checkOpenRouterAvailability, clearQuestionCache } from 
 import fs from 'fs';
 
 export async function hfGenerateQuestions(config, onProgress, shouldStop) {
+  const MAX_GENERATION_TIME = 15 * 60 * 1000; 
+  const startTime = Date.now();
+
   const {
     singleChoice,
     multipleChoice, 
@@ -59,6 +62,11 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
 
   const generateQuestionType = async (count, generator, typeName) => {
     for (let i = 0; i < count; i++) {
+      if (Date.now() - startTime > MAX_GENERATION_TIME) {
+        console.log(`⏹️ Досягнуто максимальний час генерації (15 хв), припиняємо. Згенеровано ${generatedQuestions.length} питань`);
+        return true;
+      }
+
       const shouldCancel = await waitIfPaused();
       if (shouldCancel) {
         console.log(`⏹️ Генерацію перервано через таймаут паузи. Згенеровано ${generatedQuestions.length} питань`);
@@ -76,14 +84,6 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
         updateProgress();
         await delay(1200);
       } catch (error) {
-        // if (error.message === 'DUPLICATE_QUESTION') {
-        //   console.log('🔄 Знайдено дубль, спробуємо згенерувати інше питання...');
-        //   i--;
-        //   await delay(500);
-        //   continue;
-        // }
-        // console.error(`Помилка генерації питання ${typeName}:`, error);
-        // throw error;
         if (error.message === "DUPLICATE_QUESTION") {
           console.log("🔄 Знайдено дубль, генеруємо інше питання...");
           i--;

@@ -6,42 +6,80 @@ class TTSService {
   }
 
   // Синтез мови, повертаємо аудіо як Buffer
-  synthesizeSpeech(text, language = 'uk') {
-    return new Promise((resolve, reject) => {
-      try {
-        const encodedText = encodeURIComponent(text);
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${language}&client=tw-ob&q=${encodedText}`;
+  // synthesizeSpeech(text, language = 'uk') {
+  //   return new Promise((resolve, reject) => {
+  //     try {
+  //       const encodedText = encodeURIComponent(text);
+  //       const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${language}&client=tw-ob&q=${encodedText}`;
 
-        const chunks = [];
-        const request = https.get(ttsUrl, (response) => {
-          if (response.statusCode !== 200) {
-            reject(new Error(`TTS request failed: ${response.statusCode}`));
-            return;
-          }
+  //       const chunks = [];
+  //       const request = https.get(ttsUrl, (response) => {
+  //         if (response.statusCode !== 200) {
+  //           reject(new Error(`TTS request failed: ${response.statusCode}`));
+  //           return;
+  //         }
 
-          response.on('data', chunk => chunks.push(chunk));
-          response.on('end', () => {
-            const audioBuffer = Buffer.concat(chunks);
-            if (audioBuffer.length === 0) {
-              reject(new Error('Downloaded audio is empty'));
-            } else {
-              resolve(audioBuffer); // повертаємо Buffer
+  //         response.on('data', chunk => chunks.push(chunk));
+  //         response.on('end', () => {
+  //           const audioBuffer = Buffer.concat(chunks);
+  //           if (audioBuffer.length === 0) {
+  //             reject(new Error('Downloaded audio is empty'));
+  //           } else {
+  //             resolve(audioBuffer); // повертаємо Buffer
+  //           }
+  //         });
+  //       });
+
+  //       request.on('error', err => reject(new Error(`TTS network error: ${err.message}`)));
+
+  //       request.setTimeout(10000, () => {
+  //         request.destroy();
+  //         reject(new Error('TTS request timeout'));
+  //       });
+
+  //     } catch (error) {
+  //       reject(error);
+  //     }
+  //   });
+  // }
+
+  synthesizeSpeech(text, language = 'uk', timeoutMs = 30000) {
+    return Promise.race([
+      new Promise((resolve, reject) => {
+        try {
+          const encodedText = encodeURIComponent(text);
+          const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${language}&client=tw-ob&q=${encodedText}`;
+
+          const chunks = [];
+          const request = https.get(ttsUrl, (response) => {
+            if (response.statusCode !== 200) {
+              reject(new Error(`TTS request failed: ${response.statusCode}`));
+              return;
             }
+
+            response.on('data', chunk => chunks.push(chunk));
+            response.on('end', () => {
+              const audioBuffer = Buffer.concat(chunks);
+              if (audioBuffer.length === 0) reject(new Error('Downloaded audio is empty'));
+              else resolve(audioBuffer);
+            });
           });
-        });
 
-        request.on('error', err => reject(new Error(`TTS network error: ${err.message}`)));
-
-        request.setTimeout(10000, () => {
-          request.destroy();
-          reject(new Error('TTS request timeout'));
-        });
-
-      } catch (error) {
-        reject(error);
-      }
-    });
+          request.on('error', err => reject(new Error(`TTS network error: ${err.message}`)));
+          request.setTimeout(10000, () => {  // це внутрішній timeout для запиту
+            request.destroy();
+            reject(new Error('TTS request timeout'));
+          });
+        } catch (error) {
+          reject(error);
+        }
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('TTS overall timeout exceeded 30s')), timeoutMs)
+      )
+    ]);
   }
+
 
   // Масовий синтез
   async synthesizeAllQuestions(questions) {

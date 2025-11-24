@@ -169,28 +169,24 @@ async function generateQuestionsAsync(sessionId) {
 
   try {
     const questions = await hfGenerateQuestions(config, 
-      // 📊 ФУНКЦІЯ ОНОВЛЕННЯ ПРОГРЕСУ
       (currentProgress) => {
         const current = generationProgress.get(sessionId);
         if (current && !current.isPaused && !current.isCancelled) {
           current.progress = currentProgress;
         }
       },
-      // 🔄 ФУНКЦІЯ ПЕРЕВІРКИ СТАНУ
       () => {
         const current = generationProgress.get(sessionId);
         return !current || current.isPaused || current.isCancelled;
       }
     );
 
-    // 🔄 ФІНАЛЬНА ПЕРЕВІРКА СТАНУ
     const finalProgress = generationProgress.get(sessionId);
     if (!finalProgress || finalProgress.isCancelled) {
       console.log(`⏹️ Генерацію скасовано для сесії ${sessionId}`);
       return;
     }
 
-    // ✅ УСПІШНЕ ЗАВЕРШЕННЯ
     progress.progress = 100;
     progress.status = "completed";
     progress.questions = questions;
