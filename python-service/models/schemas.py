@@ -3,4 +3,4 @@ from typing import List
 
 class TextRequest(BaseModel):
     text: str
-    top_n: int = 10
+    top_n: int = 7

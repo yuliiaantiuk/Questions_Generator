@@ -281,6 +281,15 @@ const SettingsPage = () => {
                     return;
                   }
 
+                  const checkResponse = await fetch(`http://localhost:5000/api/session/check/${sessionId}`);
+                  if (!checkResponse.ok) {
+                    // Якщо сесія не активна - повертаємо на upload
+                    alert("Сесія закінчилася. Будь ласка, завантажте файл знову.");
+                    sessionStorage.removeItem('uploadedFileState');
+                    navigate("/");
+                    return;
+                  }
+
                   const forceRegenerate = hasGeneratedEmpty && keywords.length === 0;
 
                   const response = await fetch("http://localhost:5000/api/generate/keywords", {

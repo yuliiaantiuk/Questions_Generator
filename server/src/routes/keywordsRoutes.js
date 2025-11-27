@@ -84,7 +84,7 @@ router.post("/keywords", async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
         text: textContent, 
-        top_n: 10, 
+        top_n: 7, 
         session_id: textSessionId
       })
     });

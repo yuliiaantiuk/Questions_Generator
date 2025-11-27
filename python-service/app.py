@@ -171,7 +171,7 @@ async def extract_keywords(req: TextRequest):
         raise HTTPException(status_code=400, detail="Empty text")
     
     session_id = hashlib.md5(text.encode("utf-8")).hexdigest()
-    top_n = max(1, min(100, int(req.top_n or 20)))
+    top_n = max(1, min(100, int(req.top_n or 7)))
     
     # Перевірка кешу
     cached_keywords = cache_manager.get(session_id)

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const UploadPage = () => {
@@ -7,30 +7,79 @@ const UploadPage = () => {
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (sessionId) {
+      restoreFileState();
+    }
+  }, []);
+
   const allowedFormats = [".txt", ".doc", ".docx", ".pdf"];
+
+  const saveFileState = (file) => {
+    if (file) {
+      const fileState = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+        isRestored: file.isRestored || false
+      };
+      sessionStorage.setItem('uploadedFileState', JSON.stringify(fileState));
+    } else {
+      sessionStorage.removeItem('uploadedFileState');
+    }
+  };
+
+  const restoreFileState = async () => {
+    const savedFileState = sessionStorage.getItem('uploadedFileState');
+    if (savedFileState) {
+      const fileState = JSON.parse(savedFileState);
+
+      // Створюємо "фейковий" файл тільки для відображення
+      const restoredFile = {
+        name: fileState.name,
+        size: fileState.size,
+        type: fileState.type,
+        lastModified: fileState.lastModified,
+        isRestored: true // ВАЖЛИВО: позначаємо як відновлений
+      };
+      
+      setFile(restoredFile);
+    }
+  };
 
   const isFileValid = (fileName) => {
     return allowedFormats.some((ext) => fileName.toLowerCase().endsWith(ext));
   };
 
   const uploadData = async () => {
-  try {
-    let response;
+    try {
+      // Якщо файл відновлений - просто переходимо, НЕ відправляємо на сервер
+      if (file && file.isRestored) {
+        console.log("Файл вже завантажений, переходимо до налаштувань");
+        navigate("/settings");
+        return;
+      }
 
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-      response = await fetch("http://localhost:5000/api/upload/file", {
-        method: "POST",
-        body: formData,
-      });
-    } else {
-      response = await fetch("http://localhost:5000/api/upload/text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-    }
+      let response;
+
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        response = await fetch("http://localhost:5000/api/upload/file", {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        response = await fetch("http://localhost:5000/api/upload/text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        saveFileState(null);
+      }
+    // ... решта коду залишається без змін
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -54,15 +103,18 @@ const UploadPage = () => {
     if (uploadedFile && isFileValid(uploadedFile.name)) {
       setFile(uploadedFile);
       setText("");
+      saveFileState(uploadedFile);
     } else {
       alert("Будь ласка, завантажте файл формату .txt, .doc, .docx або .pdf");
-      e.target.value = ""; // очищаємо input
+      e.target.value = ""; 
       setFile(null);
+      saveFileState(null);
     }
   };
 
   const handleRemoveFile = () => {
     setFile(null);
+    saveFileState(null);
   };
 
 
@@ -70,7 +122,8 @@ const UploadPage = () => {
     const newText = e.target.value;
     setText(newText);
     if (newText.trim().length > 0) {
-      setFile(null); // очищаємо файл, якщо користувач почав вводити текст
+      setFile(null);
+      saveFileState(null); 
     }
   };
 
@@ -78,10 +131,16 @@ const UploadPage = () => {
 
   const isButtonEnabled = (file && isFileValid(file.name)) || wordCount >= 500;
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  await uploadData();
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("Файл перед відправкою:", file); // Додай цей лог
+    if (file && file.isRestored) {
+      console.log("Файл відновлений, просто переходимо");
+      navigate("/settings");
+      return;
+    }
+    await uploadData();
+  };
 
 
   return (
