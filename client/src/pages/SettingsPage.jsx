@@ -89,6 +89,69 @@ const SettingsPage = () => {
     });
   };
 
+  const handleShowKeywords = async () => {
+    setIsLoadingKeywords(true);
+
+    try {
+      const sessionId = sessionStorage.getItem("sessionId");
+      if (!sessionId) {
+        alert("Не знайдено сесію. Завантажте файл або введіть текст спочатку.");
+        navigate("/");
+        return;
+      }
+
+      const checkResponse = await fetch(`http://localhost:5000/api/session/check/${sessionId}`);
+      if (!checkResponse.ok) {
+        alert("Сесія закінчилася. Будь ласка, завантажте файл знову.");
+        sessionStorage.removeItem("uploadedFileState");
+        navigate("/");
+        return;
+      }
+
+      const forceRegenerate = hasGeneratedEmpty && keywords.length === 0;
+
+      const response = await fetch("http://localhost:5000/api/generate/keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, forceRegenerate }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        console.log("Помилка при отриманні ключових слів:", data.error);
+        alert("Не вдалося отримати ключові слова.");
+
+        setKeywords([]);
+        setShowKeywords(false);
+
+        await fetch(`http://localhost:5000/api/upload/delete/${sessionId}`, { method: "DELETE" });
+        navigate("/");
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.textSessionId) setTextSessionId(data.textSessionId);
+
+      setKeywords(data.keywords || []);
+
+      if (data.keywords?.length === 0 && !data.fromCache) {
+        setHasGeneratedEmpty(true);
+      } else if (data.keywords?.length > 0) {
+        setHasGeneratedEmpty(false);
+      }
+
+      setIsLoadingKeywords(false);
+      setShowKeywords(true);
+
+    } catch (error) {
+      setIsLoadingKeywords(false);
+      console.error("Помилка при запиті ключових слів:", error);
+      alert("Не вдалося витягти ключові слова.");
+      navigate("/upload");
+    }
+  };
+
   return (
     <div style={styles.contentWrapper}>
       <div style={styles.container}>
@@ -252,7 +315,6 @@ const SettingsPage = () => {
             </div>
           )}
           <button style={styles.buttonSecondary} onClick={() => {
-            // Зберігаємо ключові слова перед приховуванням
             if (textSessionId && keywords.length > 0) {
               saveKeywordsToServer(keywords);
             }
@@ -271,70 +333,7 @@ const SettingsPage = () => {
 
             <button
               style={styles.buttonSecondary}
-              onClick={async () => {
-                setIsLoadingKeywords(true);
-                try {
-                  const sessionId = sessionStorage.getItem("sessionId");
-                  if (!sessionId) {
-                    alert("Не знайдено сесію. Завантажте файл або введіть текст спочатку.");
-                    navigate("/");
-                    return;
-                  }
-
-                  const checkResponse = await fetch(`http://localhost:5000/api/session/check/${sessionId}`);
-                  if (!checkResponse.ok) {
-                    // Якщо сесія не активна - повертаємо на upload
-                    alert("Сесія закінчилася. Будь ласка, завантажте файл знову.");
-                    sessionStorage.removeItem('uploadedFileState');
-                    navigate("/");
-                    return;
-                  }
-
-                  const forceRegenerate = hasGeneratedEmpty && keywords.length === 0;
-
-                  const response = await fetch("http://localhost:5000/api/generate/keywords", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                      sessionId,
-                      forceRegenerate 
-                    }),
-                  });
-
-                  if (!response.ok) {
-                    const data = await response.json();
-                    console.log("Помилка при отриманні ключових слів:", data.error);
-                    alert("Не вдалося отримати ключові слова.");
-                    
-                    setKeywords([]);
-                    setShowKeywords(false);
-
-                    await fetch(`http://localhost:5000/api/upload/delete/${sessionId}`, { method: "DELETE" });
-                    navigate("/");
-                    return;
-                  }
-
-                  const data = await response.json();
-
-                  if (data.textSessionId) setTextSessionId(data.textSessionId);
-
-                  setKeywords(data.keywords || []);
-
-                  if (data.keywords?.length === 0 && !data.fromCache) {
-                    setHasGeneratedEmpty(true);
-                  } else if (data.keywords?.length > 0) {
-                    setHasGeneratedEmpty(false);
-                  }
-
-                  setIsLoadingKeywords(false);
-                  setShowKeywords(true);
-                } catch (error) {
-                  setIsLoadingKeywords(false);
-                  console.error("Помилка при запиті ключових слів:", error);
-                  alert("Не вдалося витягти ключові слова.");
-                  navigate("/upload"); 
-                }
-              }}
+              onClick={handleShowKeywords}
             >
               Показати ключові слова
             </button>
