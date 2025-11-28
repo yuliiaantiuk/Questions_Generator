@@ -1,6 +1,7 @@
 import re
 from stop_words import get_stop_words
 from utils import *
+import pymorphy3
 
 class TextProcessor:
     def __init__(self):
@@ -8,6 +9,13 @@ class TextProcessor:
         self.common_verbs = COMMON_VERBS
         self.function_words = FUNCTION_WORDS
         self.custom_exclude = CUSTOM_EXCLUDE
+        self.morph = pymorphy3.MorphAnalyzer(lang="uk")
+
+    def normalize_lemma(self, word: str) -> str:
+        p = self.morph.parse(word)
+        if p:
+            return p[0].normal_form
+        return word
     
     def filter_main_content(self, text: str) -> str:
         """Фільтрація основного вмісту тексту"""
@@ -33,53 +41,27 @@ class TextProcessor:
             main_lines.append(line)
         
         return " ".join(main_lines)
-    
-    # def is_stopword(self, word: str) -> bool:
-    #     """Розширена перевірка стоп-слів і виключень"""
-    #     if len(word) < 3:
-    #         return True
-
-    #     # Вбудовані стоп-слова
-    #     if word in self.stopwords_uk:
-    #         return True
-
-    #     # Частовживані дієслова
-    #     if word in self.common_verbs:
-    #         return True
-
-    #     # Службові та неповнозначні слова
-    #     if word in self.function_words:
-    #         return True
-
-    #     # Кастомні виключення
-    #     if word in self.custom_exclude:
-    #         return True
-
-    #     return False
 
     def is_stopword(self, word: str) -> bool:
-        """Розширена перевірка стоп-слів і виключень"""
-        if len(word) < 3:
+        word_for_check = word.replace("'", "")
+
+        if len(word_for_check) < 3:
             return True
 
         # Вбудовані стоп-слова
-        if word in self.stopwords_uk:
+        if word_for_check in self.stopwords_uk:
             return True
 
         # Частовживані дієслова
-        if word in self.common_verbs:
+        if word_for_check in self.common_verbs:
             return True
 
         # Службові та неповнозначні слова
-        if word in self.function_words:
+        if word_for_check in self.function_words:
             return True
 
         # Кастомні виключення
-        if word in self.custom_exclude:
-            return True
-
-        # Додаткова перевірка для коротких абстрактних слів
-        if len(word) <= 5 and word in ABSTRACT_CONCEPTS:
+        if word_for_check in self.custom_exclude:
             return True
 
         return False
@@ -96,3 +78,12 @@ class TextProcessor:
         }
         
         return any(word.endswith(suffix) for suffix in patronymic_suffixes)
+    
+    def normalize_apostrophes(self, text: str) -> str:
+        return (text
+            .replace("’", "'")
+            .replace("ʼ", "'")
+            .replace("`", "'")
+            .replace("‘", "'")
+            .replace("´", "'")
+        )

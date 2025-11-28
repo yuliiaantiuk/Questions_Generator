@@ -1,157 +1,3 @@
-# # import logging
-# # from typing import List, Tuple
-# # from .stanza_service import StanzaService
-# # from .text_processor import TextProcessor
-
-# # logger = logging.getLogger("keyword-service")
-
-# # class KeywordExtractor:
-# #     def __init__(self):
-# #         self.stanza_service = StanzaService()
-# #         self.text_processor = TextProcessor()
-# #         self.ALLOWED_POS = {"NOUN", "PROPN", "ADJ"}
-    
-# #     def extract_keywords(self, text: str, top_n: int = 10) -> List[str]:
-# #         """Основний метод витягування ключових слів"""
-# #         clean_text = self.text_processor.filter_main_content(text)
-# #         doc = self.stanza_service.process_text(clean_text)
-# #         lemmas = self._extract_lemmas(doc)
-# #         return self._rank_keywords(lemmas, top_n)
-    
-# #     def _extract_lemmas(self, doc) -> List[str]:
-# #         """Витягнення лем та фраз з обробленого тексту"""
-# #         lemmas = []
-        
-# #         for sent in doc.sentences:
-# #             words = sent.words
-# #             chunk = []
-            
-# #             for w in words:
-# #                 lemma = (w.lemma or w.text).lower()
-                
-# #                 if self.text_processor.is_stopword(lemma):
-# #                     continue
-
-# #                 if w.upos == "VERB":
-# #                     chunk = []
-# #                     continue
-                    
-# #                 if w.upos == "ADJ":
-# #                     chunk.append(lemma)
-# #                 elif w.upos in {"NOUN", "PROPN"}:
-# #                     if chunk:
-# #                         phrase = " ".join(chunk + [lemma])
-# #                         lemmas.append(phrase)
-# #                         chunk = []
-# #                     else:
-# #                         lemmas.append(lemma)
-# #                 else:
-# #                     chunk = []
-        
-# #         return lemmas
-    
-# #     def _rank_keywords(self, lemmas: List[str], top_n: int) -> List[str]:
-# #         """Ранжування ключових слів за частотою"""
-# #         freq = {}
-# #         for phrase in lemmas:
-# #             freq[phrase] = freq.get(phrase, 0) + 1
-        
-# #         sorted_items = sorted(freq.items(), key=lambda x: (-x[1], -len(x[0])))
-# #         return [k for k, v in sorted_items[:top_n]]
-
-# import logging
-# from typing import List
-# from collections import Counter
-# import re
-# from sklearn.feature_extraction.text import TfidfVectorizer
-
-# from .stanza_service import StanzaService
-# from .text_processor import TextProcessor
-
-# logger = logging.getLogger("keyword-service")
-
-
-# class KeywordExtractor:
-#     def __init__(self):
-#         self.stanza_service = StanzaService()
-#         self.text_processor = TextProcessor()
-#         self.ALLOWED_POS = {"NOUN", "PROPN", "ADJ"}
-
-#     def extract_keywords(self, text: str, top_n: int = 10) -> List[str]:
-#         """Основний метод витягування ключових слів"""
-#         clean_text = self.text_processor.filter_main_content(text)
-#         if not clean_text:
-#             return []
-
-#         doc = self.stanza_service.process_text(clean_text)
-
-#         # Лінгвістичне витягування лем
-#         lemmas = self._extract_lemmas(doc)
-
-#         # Статистичне ранжування через TF-IDF
-#         ranked_keywords = self._tfidf_rank(clean_text, lemmas, top_n)
-
-#         return ranked_keywords
-
-#     def _extract_lemmas(self, doc) -> List[str]:
-#         """Витягування лем та фраз з обробленого тексту (лінгвістичний підхід)"""
-#         lemmas = []
-
-#         for sent in doc.sentences:
-#             chunk = []
-#             for w in sent.words:
-#                 lemma = (w.lemma or w.text).lower()
-#                 lemma = re.sub(r"[^а-яіїєґa-zA-Z0-9\-]", "", lemma)
-
-#                 if self.text_processor.is_stopword(lemma):
-#                     chunk = []
-#                     continue
-
-#                 # Виключаємо дієслова
-#                 if w.upos == "VERB":
-#                     chunk = []
-#                     continue
-
-#                 # ADJ + NOUN/PROPN
-#                 if w.upos == "ADJ":
-#                     chunk.append(lemma)
-#                 elif w.upos in {"NOUN", "PROPN"}:
-#                     if chunk:
-#                         phrase = " ".join(chunk + [lemma])
-#                         lemmas.append(phrase)
-#                         chunk = []
-#                     else:
-#                         lemmas.append(lemma)
-#                 else:
-#                     chunk = []
-
-#         # Фільтруємо дуже короткі або сміттєві слова
-#         lemmas = [l for l in lemmas if len(l) > 2]
-#         return lemmas
-
-#     def _tfidf_rank(self, text: str, candidates: List[str], top_n: int) -> List[str]:
-#         """Ранжування кандидатів за допомогою TF-IDF"""
-#         if not candidates:
-#             return []
-        
-#         unique_candidates = list(set(candidates))
-
-#         # Для TF-IDF будуємо "короткий документ" з кандидатів
-#         vectorizer = TfidfVectorizer(
-#             vocabulary=unique_candidates,
-#             token_pattern=r"(?u)\b\w+\b",
-#             lowercase=True
-#         )
-
-#         tfidf_matrix = vectorizer.fit_transform([text])
-#         scores = tfidf_matrix.toarray()[0]
-
-#         keyword_scores = dict(zip(vectorizer.get_feature_names_out(), scores))
-#         # Сортуємо: спочатку по TF-IDF, потім довжина слова/фрази
-#         sorted_keywords = sorted(keyword_scores.items(), key=lambda x: (-x[1], -len(x[0])))
-
-#         return [k for k, v in sorted_keywords[:top_n]]
-
 import logging
 from typing import List
 from collections import Counter
@@ -170,31 +16,11 @@ class KeywordExtractor:
         self.text_processor = TextProcessor()
         self.ALLOWED_POS = {"NOUN", "PROPN", "ADJ"}
 
-    # def extract_keywords(self, text: str, top_n: int = 10) -> List[str]:
-    #     """Основний метод витягування ключових слів"""
-    #     clean_text = self.text_processor.filter_main_content(text)
-    #     if not clean_text:
-    #         return []
-
-    #     doc = self.stanza_service.process_text(clean_text)
-
-    #     # Лінгвістичне витягування лем
-    #     lemmas = self._extract_lemmas(doc)
-
-    #     if not lemmas:
-    #         return []
-
-    #     # Авто-фільтрація загальних і дуже коротких лем
-    #     lemmas = self._filter_common_lemmas(lemmas)
-
-    #     # Статистичне ранжування через TF-IDF
-    #     ranked_keywords = self._tfidf_rank(clean_text, lemmas, top_n)
-
-    #     return ranked_keywords
-
     def extract_keywords(self, text: str, top_n: int = 7) -> List[str]:
         """Основний метод витягування ключових слів з покращеною фільтрацією"""
         clean_text = self.text_processor.filter_main_content(text)
+        clean_text = self.text_processor.normalize_apostrophes(clean_text)
+
         if not clean_text:
             return []
 
@@ -217,42 +43,6 @@ class KeywordExtractor:
 
         return ranked_keywords
 
-    # def _extract_lemmas(self, doc) -> List[str]:
-    #     """Витягування лем та фраз з обробленого тексту (лінгвістичний підхід)"""
-    #     lemmas = []
-
-    #     for sent in doc.sentences:
-    #         chunk = []
-    #         for w in sent.words:
-    #             lemma = (w.lemma or w.text).lower()
-    #             # Залишаємо лише літери та цифри
-    #             lemma = re.sub(r"[^а-яіїєґa-zA-Z0-9\-]", "", lemma)
-
-    #             # Фільтруємо стоп-слова, короткі слова і виключення
-    #             if self.text_processor.is_stopword(lemma):
-    #                 chunk = []
-    #                 continue
-
-    #             # Виключаємо дієслова
-    #             if w.upos == "VERB":
-    #                 chunk = []
-    #                 continue
-
-    #             # ADJ + NOUN/PROPN формуємо фрази
-    #             if w.upos == "ADJ":
-    #                 chunk.append(lemma)
-    #             elif w.upos in {"NOUN", "PROPN"}:
-    #                 if chunk:
-    #                     phrase = " ".join(chunk + [lemma])
-    #                     lemmas.append(phrase)
-    #                     chunk = []
-    #                 else:
-    #                     lemmas.append(lemma)
-    #             else:
-    #                 chunk = []
-
-    #     return lemmas
-
     def _extract_lemmas(self, doc) -> List[str]:
         """Вдосконалене витягування лем з фільтрацією власних назв"""
         lemmas = []
@@ -263,19 +53,21 @@ class KeywordExtractor:
                 lemma = (w.lemma or w.text).lower().strip()
                 
                 # Покращена очистка лем
-                lemma = re.sub(r"[^а-яіїєґa-z0-9\-]", "", lemma)
+                lemma = re.sub(r"[^а-яіїєґa-z0-9\-']", "", lemma)
+                lemma = self.text_processor.normalize_lemma(lemma)
                 
                 if not lemma or len(lemma) < 2:
                     chunk = []
                     continue
-                    
-                # Розширена фільтрація стоп-слів
-                if self.text_processor.is_stopword(lemma):
+
+                effective_lemma = lemma
+
+                if self.text_processor.is_stopword(effective_lemma):
                     chunk = []
                     continue
 
                 # Фільтрація власних назв та імен по батькові
-                if self._is_proper_name(w, lemma):
+                if self._is_proper_name(w, effective_lemma):
                     chunk = []
                     continue
 
@@ -286,14 +78,14 @@ class KeywordExtractor:
 
                 # Покращена логіка формування фраз
                 if w.upos == "ADJ":
-                    chunk.append(lemma)
+                    chunk.append(effective_lemma)
                 elif w.upos in {"NOUN", "PROPN"}:
                     if chunk:
-                        phrase = " ".join(chunk + [lemma])
+                        phrase = " ".join(chunk + [effective_lemma])
                         lemmas.append(phrase)
                         chunk = []
                     else:
-                        lemmas.append(lemma)
+                        lemmas.append(effective_lemma)
                 else:
                     chunk = []
                     
@@ -321,32 +113,22 @@ class KeywordExtractor:
             
         return False
 
-    # def _filter_common_lemmas(self, lemmas: List[str]) -> List[str]:
-    #     """Фільтрує надто короткі, часті або дубльовані леми"""
-    #     # Об’єднуємо однакові леми в множину
-    #     unique_lemmas = list(set(lemmas))
-
-    #     # Відкидаємо дуже короткі
-    #     filtered = [l for l in unique_lemmas if len(l) > 3]
-
-    #     return filtered
-
     def _filter_common_lemmas(self, lemmas: List[str]) -> List[str]:
         """Розширена фільтрація загальних та неінформативних лем"""
         if not lemmas:
             return []
+        
+        unique_lemmas = set(lemmas)
         
         # Лічильник для виявлення дуже поширених слів
         counter = Counter(lemmas)
         total_count = len(lemmas)
         
         filtered = []
-        for lemma in set(lemmas):
-            # Фільтрація за довжиною
+        for lemma in unique_lemmas:
             if len(lemma) < 3:
                 continue
                 
-            # Фільтрація за частотою (виключаємо надто поширені)
             freq = counter[lemma] / total_count
             if freq > 0.5:
                 continue
@@ -386,7 +168,7 @@ class KeywordExtractor:
 
         vectorizer = TfidfVectorizer(
             vocabulary=candidates,
-            token_pattern=r"(?u)\b\w+\b",
+            token_pattern=r"(?u)\b[\w']+\b",
             lowercase=True
         )
 
@@ -395,7 +177,6 @@ class KeywordExtractor:
             scores = tfidf_matrix.toarray()[0]
             keyword_scores = dict(zip(vectorizer.get_feature_names_out(), scores))
             
-            # Більш агресивне сортування - віддаємо перевагу довшим та специфічнішим термінам
             sorted_keywords = sorted(
                 keyword_scores.items(), 
                 key=lambda x: (-x[1], -len(x[0]), -x[0].count(' '))
