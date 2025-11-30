@@ -282,7 +282,7 @@ const handleExport = async (format) => {
                   value="doc"
                   checked={exportFormat === "doc"}
                   onChange={(e) => setExportFormat(e.target.value)}
-                /> Документ Microsoft Word (.doc)
+                /> Документ .doc
               </label>
               <label>
                 <input
@@ -306,7 +306,7 @@ const handleExport = async (format) => {
                   value="png"
                   checked={exportFormat === "png"}
                   onChange={(e) => setExportFormat(e.target.value)}
-                /> ZIP Архів файл .png
+                /> ZIP Архів файлів .png
               </label>
               <label>
                 <input
