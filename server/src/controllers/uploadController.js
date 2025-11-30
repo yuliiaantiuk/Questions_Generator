@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const TEMP_STORAGE = path.join(__dirname, "..", "..", "temp");
-console.log("TEMP_STORAGE у uploadController:", TEMP_STORAGE);
+// console.log("TEMP_STORAGE у uploadController:", TEMP_STORAGE);
 
 // перевіряємо, що директорія існує
 if (!fs.existsSync(TEMP_STORAGE)) {

@@ -27,11 +27,11 @@ const __dirname = path.dirname(__filename);
 const TEMP_STORAGE = path.join(__dirname, "temp");
 const TEMP_QUESTIONS = path.join(__dirname, "tempQuestions");
 
-console.log("TEMP_STORAGE у server.js:", TEMP_STORAGE);
-console.log("TEMP_QUESTIONS у server.js:", TEMP_QUESTIONS);
+// console.log("TEMP_STORAGE у server.js:", TEMP_STORAGE);
+// console.log("TEMP_QUESTIONS у server.js:", TEMP_QUESTIONS);
 
 function cleanOldQuestions() {
-  console.log("Перевірка старих питань...");
+  // console.log("Перевірка старих питань...");
   
   const foldersToClean = [TEMP_QUESTIONS];
   const maxAge = 24 * 60 * 60 * 1000; 
@@ -87,30 +87,11 @@ function startPeriodicCleanup() {
   cleanOldQuestions();
   
   setInterval(cleanOldQuestions, 6 * 60 * 60 * 1000);
-  console.log("⏰ Запущено періодичне очищення (кожні 6 годин)");
+  console.log("Запущено періодичне очищення");
 }
 
-
-// function clearTempOnStartup() {
-//   console.log("Очищення TEMP_STORAGE:", TEMP_STORAGE);
-//   if (fs.existsSync(TEMP_STORAGE)) {
-//     console.log("Папка існує, очищаємо...");
-//     for (const file of fs.readdirSync(TEMP_STORAGE)) {
-//       const filePath = path.join(TEMP_STORAGE, file);
-//       try {
-//         fs.unlinkSync(filePath);
-//         console.log(`Видалено старий файл при запуску: ${file}`);
-//       } catch (err) {
-//         console.error(`Помилка видалення ${file}:`, err);
-//       }
-//     }
-//   } else {
-//     console.log("Папку не знайдено:", TEMP_STORAGE);
-//   }
-// }
-
 function clearTempOnStartup() {
-  console.log("Очищення тимчасових файлів при запуску...");
+  // console.log("Очищення тимчасових файлів при запуску");
   
   const foldersToClear = [TEMP_STORAGE, TEMP_QUESTIONS];
   
@@ -135,7 +116,7 @@ function clearTempOnStartup() {
         }
       });
 
-      console.log(`З папки ${path.basename(folder)} видалено ${clearedCount} файлів`);
+      // console.log(`З папки ${path.basename(folder)} видалено ${clearedCount} файлів`);
 
     } catch (err) {
       console.error(`Помилка читання папки ${folder}:`, err.message);

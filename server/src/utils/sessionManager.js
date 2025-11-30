@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const TEMP_STORAGE = path.join(__dirname, "..", "..", "temp");
-console.log("TEMP_STORAGE у sessionManager:", TEMP_STORAGE);
+// console.log("TEMP_STORAGE у sessionManager:", TEMP_STORAGE);
 
 const sessions = new Map(); // sessionId -> { filePath, lastActive }
 
