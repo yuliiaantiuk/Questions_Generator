@@ -9,7 +9,7 @@ import {
   exportPNGZip
 } from "../services/exportService";
 
-
+// Page to display generated questions and provide export/tts options
 const ResultPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,6 +29,7 @@ const ResultPage = () => {
   
 );
 
+  // Ping server to keep session alive
   useEffect(() => {
   const sessionId = sessionStorage.getItem("sessionId");
   if (!sessionId) return;
@@ -39,10 +40,10 @@ const ResultPage = () => {
     }).catch(() => {});
   };
 
-  // пінг кожні 5 хвилин
+  // Ping every 5 minutes
   const interval = setInterval(ping, 5 * 60 * 1000);
 
-  // очищення при закритті вкладки
+  // Cleanup on tab close
   window.addEventListener("beforeunload", ping);
 
   return () => {
@@ -51,19 +52,20 @@ const ResultPage = () => {
   };
 }, []);
 
+// Function to handle speaking a specific question
 const toggleSpeaking = async (index, question) => {
   const currentlySpeakingIndex = speakingStates.findIndex(s => s);
 
-  // Якщо зараз йде озвучка саме цього питання
+  // If the current question is being spoken
   if (currentlySpeakingIndex === index) {
     ttsClient.stopAll();
     speakingRef.current = false;
     setIsSpeaking(false);
     setSpeakingStates(Array(generatedData.questions.length).fill(false));
-    return; // зупиняємо, нічого нового не запускаємо
+    return; // stop, do not start anything new
   }
 
-  // Якщо йде інше питання — зупиняємо його, але не виходимо
+  // If another question is being spoken — stop it, but do not exit
   if (currentlySpeakingIndex !== -1 || speakingRef.current) {
     ttsClient.stopAll();
     speakingRef.current = false;
@@ -71,7 +73,7 @@ const toggleSpeaking = async (index, question) => {
     setSpeakingStates(Array(generatedData.questions.length).fill(false));
   }
 
-  // Вмикаємо озвучку для нового питання
+  // Turn on speaking for the new question
   speakingRef.current = true;
   setIsSpeaking(true);
   setSpeakingStates(prev => {
@@ -94,23 +96,23 @@ const toggleSpeaking = async (index, question) => {
   }
 };
 
-
+// Function to handle speaking all questions in sequence
 const handleSpeakAll = async () => {
   if (!generatedData.questions || generatedData.questions.length === 0) return;
 
-  // Встановлюємо глобальний стан озвучення
+  // Set global speaking state
   setIsSpeaking(true);
   speakingRef.current = true;
 
-  // Спочатку вимикаємо всі кнопки
+  // First, turn off all buttons
   setSpeakingStates(Array(generatedData.questions.length).fill(false));
 
   try {
     for (let i = 0; i < generatedData.questions.length; i++) {
-      // Якщо користувач натиснув "стоп" — перериваємо цикл
+      // If the user pressed "stop" — break the loop
       if (!speakingRef.current) break;
 
-      // Підсвічуємо кнопку поточного питання
+      // Highlight the button of the current question
       setSpeakingStates(prev => {
         const updated = [...prev];
         updated.fill(false);
@@ -118,10 +120,10 @@ const handleSpeakAll = async () => {
         return updated;
       });
 
-      // Озвучуємо питання
+      // Speak the question
       await ttsClient.speakQuestion(generatedData.questions[i]);
 
-      // Після завершення вимикаємо кнопку
+      // After finishing, turn off the button
       setSpeakingStates(prev => {
         const updated = [...prev];
         updated[i] = false;
@@ -129,20 +131,22 @@ const handleSpeakAll = async () => {
       });
     }
   } finally {
-    // Після завершення всієї озвучки
+    // After finishing all speaking
     speakingRef.current = false;
     setIsSpeaking(false);
     setSpeakingStates(Array(generatedData.questions.length).fill(false));
   }
 };
 
+// Function to stop all speaking
 const handleStopSpeaking = () => {
-  speakingRef.current = false;           // глобальний стан
-  ttsClient.stopAll();                    // зупиняємо TTS
-  setIsSpeaking(false);                   // оновлюємо кнопку зверху
-  setSpeakingStates(Array(generatedData.questions.length).fill(false)); // вимикаємо всі індикатори
+  speakingRef.current = false;           // global speaking state
+  ttsClient.stopAll();                    // stop TTS
+  setIsSpeaking(false);                   // update top button
+  setSpeakingStates(Array(generatedData.questions.length).fill(false)); // turn off all indicators
 };
 
+// Function to handle export
 const handleExport = async (format) => {
   if (!generatedData.questions || generatedData.questions.length === 0) {
     alert("Немає запитань для експортую");
@@ -182,6 +186,7 @@ const handleExport = async (format) => {
 };
 
 
+// Function to handle repeat generation
   const handleRepeatGeneration = () => {
     navigate("/settings");
   };
@@ -262,7 +267,7 @@ const handleExport = async (format) => {
         </div>
       </div>
 
-      {/* Модальне вікно експорту */}
+      {/* Export modal */}
       {showExportModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>

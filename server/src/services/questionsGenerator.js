@@ -23,59 +23,60 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
 
   clearQuestionCache();
 
-  // Перевірка доступності OpenRouter API
+  // Check OpenRouter API availability
   const isApiAvailable = await checkOpenRouterAvailability();
   if (!isApiAvailable) {
-    throw new Error('OpenRouter API недоступне. Перевірте підключення або API ключ.');
+    throw new Error('OpenRouter API is unavailable. Please check your connection or API key.');
   }
 
-  // Оновлюємо прогрес
+  // Update progress
   const updateProgress = () => {
     completed++;
     const progress = Math.round((completed / totalQuestions) * 100);
     onProgress(progress);
   };
 
-  console.log(`🚀 Початок генерації ${totalQuestions} питань (рівень: ${difficulty})`);
+  console.log(`Початок генерації ${totalQuestions} питань (рівень: ${difficulty})`);
 
-  // 🔄 НОВА ФУНКЦІЯ ДЛЯ ПАУЗИ З ТАЙМАУТОМ 30 ХВИЛИН
+  // Pause handling with 30-minute timeout
   const waitIfPaused = async () => {
-    if (!shouldStop || !shouldStop()) return false; // Якщо не на паузі - продовжуємо
+    if (!shouldStop || !shouldStop()) return false; // If not paused, continue
     
-    console.log('⏸️ Генерація на паузі, очікування...');
+    console.log('⏸ Generation paused, waiting...');
     const startTime = Date.now();
-    const timeout = 30 * 60 * 1000; // 30 хвилин
+    const timeout = 30 * 60 * 1000; // 30 minutes
     
     while (shouldStop && shouldStop()) {
-      // Перевіряємо таймаут
+      // Check timeout
       if (Date.now() - startTime > timeout) {
-        console.log('⏰ Досягнуто максимальний час очікування (30 хв)');
-        return true; // Таймаут - зупиняємо генерацію
+        console.log('Reached maximum wait time (30 minutes)');
+        return true; // Timeout - stop generation
       }
       
-      // Чекаємо 1 секунду перед наступною перевіркою
+      // Wait 1 second before next check
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
-    console.log('▶️ Продовження генерації після паузи');
-    return false; // Продовжуємо генерацію
+    console.log('Resuming generation after pause');
+    return false; // Continue generation
   };
 
+  // Generate questions by type
   const generateQuestionType = async (count, generator, typeName) => {
     for (let i = 0; i < count; i++) {
       if (Date.now() - startTime > MAX_GENERATION_TIME) {
-        console.log(`⏹️ Досягнуто максимальний час генерації (15 хв), припиняємо. Згенеровано ${generatedQuestions.length} питань`);
+        console.log(`Reached maximum generation time (15 minutes), stopping. Generated ${generatedQuestions.length} questions`);
         return true;
       }
 
       const shouldCancel = await waitIfPaused();
       if (shouldCancel) {
-        console.log(`⏹️ Генерацію перервано через таймаут паузи. Згенеровано ${generatedQuestions.length} питань`);
+        console.log(`Generation paused timeout reached. Generated ${generatedQuestions.length} questions`);
         return true;
       }
 
       if (shouldStop && shouldStop()) {
-        console.log(`⏹️ Генерацію скасовано. Згенеровано ${generatedQuestions.length} питань`);
+        console.log(`Generation cancelled. Generated ${generatedQuestions.length} questions`);
         return true; 
       }
       
@@ -86,20 +87,20 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
         await delay(1200);
       } catch (error) {
         if (error.message === "DUPLICATE_QUESTION") {
-          console.log("🔄 Знайдено дубль, генеруємо інше питання...");
+          console.log("Duplicate question detected, regenerating...");
           i--;
           await delay(500);
           continue;
         }
 
         if (error.message === "INVALID_JSON") {
-          console.warn(`⚠️ Модель повернула невалідний JSON. Повторюємо генерацію...`);
+          console.warn(`⚠️ Model returned invalid JSON. Retrying generation...`);
           i--;
           await delay(800);
           continue;
         }
 
-        console.error(`❌ Неочікувана помилка генерації ${typeName}:`, error);
+        console.error(`Unexpected error generating ${typeName}:`, error);
         throw error;
       }
     }
@@ -115,18 +116,19 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
 
   for (const { count, generator, name } of generators) {
     if (count > 0) {
-      console.log(`📝 Генерація ${count} питань типу ${name}`);
+      console.log(`Generating ${count} questions of type ${name}`);
       const wasCancelled = await generateQuestionType(count, generator, name);
       if (wasCancelled) {
-        return generatedQuestions; // Повертаємо що встигли згенерувати
+        return generatedQuestions; // Return what has been generated so far
       }
     }
   }
 
-  console.log(`✅ Генерацію завершено! Створено ${generatedQuestions.length} питань`);
+  console.log(`Generation completed! Created ${generatedQuestions.length} questions`);
   return generatedQuestions;
 }
 
+// Function to generate a single choice question
 async function generateSingleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
   const prompt = createSingleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
@@ -137,6 +139,7 @@ async function generateSingleChoiceQuestion(text, difficulty, keywords, currentI
   return { ...response, type: 'singleChoice' };
 }
 
+// Function to generate a multiple choice question
 async function generateMultipleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
   const prompt = createMultipleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
@@ -147,6 +150,7 @@ async function generateMultipleChoiceQuestion(text, difficulty, keywords, curren
   return { ...response, type: 'multipleChoice' };
 }
 
+// Function to generate a true/false question
 async function generateTrueFalseQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
   const prompt = createTrueFalsePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
@@ -157,6 +161,7 @@ async function generateTrueFalseQuestion(text, difficulty, keywords, currentInde
   return { ...response, type: 'trueFalse' };
 }
 
+// Function to generate a short answer question
 async function generateShortAnswerQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
   const prompt = createShortAnswerPrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions);
   const response = await callOpenRouter(prompt, {
@@ -167,6 +172,7 @@ async function generateShortAnswerQuestion(text, difficulty, keywords, currentIn
   return { ...response, type: 'shortAnswer' };
 }
 
+// Function to create single choice prompt
 function createSingleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'singleChoice');
@@ -208,6 +214,7 @@ ${languageComplexity}
 `;
 }
 
+// Function to create multiple choice prompt
 function createMultipleChoicePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'multipleChoice');
@@ -250,6 +257,7 @@ ${languageComplexity}
 `;
 }
 
+// Function to create true/false prompt
 function createTrueFalsePrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'trueFalse');
@@ -291,6 +299,7 @@ ${languageComplexity}
 `;
 }
 
+// Function to create short answer prompt
 function createShortAnswerPrompt(text, difficulty, keywords, currentIndex, totalCount, existingQuestions = []) {
   const truncatedText = getTextExcerpt(text, currentIndex, totalCount);
   const difficultyInstructions = getDifficultySpecificInstructions(difficulty, 'shortAnswer');
@@ -332,6 +341,7 @@ ${languageComplexity}
 `;
 }
 
+// Function to get difficulty specific instructions
 function getDifficultySpecificInstructions(difficulty, questionType) {
   const instructions = {
     easy: {
@@ -357,6 +367,7 @@ function getDifficultySpecificInstructions(difficulty, questionType) {
   return instructions[difficulty]?.[questionType] || "";
 }
 
+// Function to get language complexity instructions
 function getLanguageComplexity(difficulty) {
   const complexities = {
     easy: "ВИКОРИСТОВУЙ: просту лексику, короткі речення, конкретні формулювання. УНИКАЙ: складних термінів, абстрактних понять, умовних конструкцій.",
@@ -366,6 +377,7 @@ function getLanguageComplexity(difficulty) {
   return complexities[difficulty] || "";
 }
 
+// Function to get cognitive focus
 function getCognitiveFocus(difficulty, index) {
   const focuses = {
     easy: [
@@ -404,6 +416,7 @@ function getCognitiveFocus(difficulty, index) {
   return levelFocuses[index % levelFocuses.length];
 }
 
+// Function to get multiple choice type
 function getMultipleChoiceType(difficulty) {
   const types = {
     easy: "ВИЗНАЧЕННЯ/ПЕРЕЛІК - вибір правильних визначень, складових, характеристик з явно правильними та неправильними варіантами",
@@ -413,6 +426,7 @@ function getMultipleChoiceType(difficulty) {
   return types[difficulty] || types.medium;
 }
 
+// Function to get true/false type
 function getTrueFalseType(difficulty) {
   const types = {
     easy: "ФАКТИЧНЕ - перевірка конкретних фактів, явно зазначених у тексті",
@@ -422,6 +436,7 @@ function getTrueFalseType(difficulty) {
   return types[difficulty] || types.medium;
 }
 
+// Function to get short answer type
 function getShortAnswerType(difficulty) {
   const types = {
     easy: "ФАКТОЛОГІЧНА - конкретні факти, визначення, прості переліки",
@@ -431,6 +446,7 @@ function getShortAnswerType(difficulty) {
   return types[difficulty] || types.medium;
 }
 
+// Function to get answer options complexity
 function getAnswerOptionsComplexity(difficulty) {
   const complexities = {
     easy: "Варіанти відповідей мають бути чіткими, конкретними, без двозначностей. Правильна відповідь очевидна при знанні тексту. Неправильні варіанти мають бути явно помилковими.",
@@ -440,6 +456,7 @@ function getAnswerOptionsComplexity(difficulty) {
   return complexities[difficulty];
 }
 
+// Function to get correct answers count
 function getCorrectAnswersCount(difficulty) {
   const counts = {
     easy: "1-2",
@@ -449,6 +466,7 @@ function getCorrectAnswersCount(difficulty) {
   return counts[difficulty] || "2-3";
 }
 
+// Function to get true/false complexity
 function getTrueFalseComplexity(difficulty) {
   const complexities = {
     easy: "Твердження має бути або явно правильним, або явно неправильним на основі прямої інформації з тексту.",
@@ -458,6 +476,7 @@ function getTrueFalseComplexity(difficulty) {
   return complexities[difficulty];
 }
 
+// Function to get short answer complexity
 function getShortAnswerComplexity(difficulty) {
   const complexities = {
     easy: "Відповідь має бути короткою (1-3 слова) і безпосередньо міститися в тексті.",
@@ -467,12 +486,14 @@ function getShortAnswerComplexity(difficulty) {
   return complexities[difficulty];
 }
 
+// Function to get text excerpt for a given part
 function getTextExcerpt(fullText, currentIndex, totalCount) {
   const textParts = splitTextIntoParts(fullText, totalCount);
   const partIndex = currentIndex % textParts.length;
   return textParts[partIndex];
 }
 
+// Function to split text into parts
 function splitTextIntoParts(text, partsCount) {
   const partLength = Math.floor(text.length / Math.max(partsCount, 1));
   const parts = [];
@@ -486,7 +507,7 @@ function splitTextIntoParts(text, partsCount) {
     }
   }
   
-  // Якщо частин менше ніж потрібно, додаємо весь текст
+  // If no parts were created, return the full text as one part
   if (parts.length === 0 && text.trim().length > 0) {
     parts.push(text);
   }
@@ -505,9 +526,9 @@ function getDifficultyText(difficulty) {
 
 function getTemperatureByDifficulty(difficulty) {
   const temperatures = {
-    easy: 0.3,    // Менша варіативність - точні факти
-    medium: 0.6,  // Середня варіативність - інтерпретації
-    hard: 0.9     // Висока варіативність - творчі підходи
+    easy: 0.3,    // Lower variability - precise facts
+    medium: 0.6,  // Medium variability - interpretations
+    hard: 0.9     // High variability - creative approaches
   };
   return temperatures[difficulty] || 0.6;
 }

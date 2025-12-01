@@ -1,10 +1,11 @@
+// Client-side TTS service
 class TTSClientService {
   constructor() {
     this.baseURL = 'http://localhost:5000/api/tts';
     this.playingAudios = new Set();
     this.audioCache = new Map();
     this.stopRequested = false;
-
+    // Abbreviations for names
     this.nameAbbreviations = {
       'М.': 'М',
       'І.': 'І',
@@ -14,7 +15,7 @@ class TTSClientService {
       'О.': 'О'
     };
   }
-
+  // Convert English text to Ukrainian phonetic representation
   englishToUkPhonetic(text) {
     const replacements = [
       [/th/gi, 'т'],
@@ -48,7 +49,7 @@ class TTSClientService {
 
     return text;
   }
-
+  // Preprocess text: replace abbreviations and Roman numerals
   preprocessText(text) {
     for (const [abbr, rep] of Object.entries(this.nameAbbreviations)) {
       const regex = new RegExp(`\\b${abbr}\\b`, 'g');
@@ -69,6 +70,7 @@ class TTSClientService {
     return this.englishToUkPhonetic(text);
   }
 
+  // Split text into segments by language (English or Ukrainian)
   splitByLanguage(text) {
     const words = text.split(/(\s+)/);
     const segments = [];
@@ -100,7 +102,7 @@ class TTSClientService {
 
     return segments;
   }
-
+  // Synthesize a text segment
   async synthesizeSegment(text, lang) {
     const cacheKey = `uk_${text}`;
     if (this.audioCache.has(cacheKey)) return this.audioCache.get(cacheKey);
@@ -108,13 +110,13 @@ class TTSClientService {
     const response = await fetch(`${this.baseURL}/synthesize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, language: 'uk' }) // завжди українська
+      body: JSON.stringify({ text, language: 'uk' }) 
     });
 
     const data = await response.json();
     if (!data.success) throw new Error(data.error || 'TTS failed');
 
-    // Конвертуємо base64 у Blob та ObjectURL
+    // Convert base64 to Blob and ObjectURL
     const audioData = data.audioData;
     const arrayBuffer = Uint8Array.from(atob(audioData), c => c.charCodeAt(0));
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
@@ -123,18 +125,19 @@ class TTSClientService {
     this.audioCache.set(cacheKey, audioUrl);
     return audioUrl;
   }
-
+  // Synthesize full text (may contain multiple segments)
   async synthesizeText(text) {
     const pre = this.preprocessText(text);
     const segments = this.splitByLanguage(pre);
 
     const urls = [];
     for (const seg of segments) {
-      urls.push(await this.synthesizeSegment(seg.text, 'uk')); // завжди українська
+      urls.push(await this.synthesizeSegment(seg.text, 'uk')); 
     }
     return urls;
   }
 
+  // Play audio from a given URL
   async playAudio(url) {
     return new Promise((resolve, reject) => {
       const audio = new Audio(url);
@@ -153,6 +156,7 @@ class TTSClientService {
     });
   }
 
+  // Stop all currently playing audio
   stopAll() {
     this.stopRequested = true;
     for (const audio of Array.from(this.playingAudios)) {
@@ -161,10 +165,12 @@ class TTSClientService {
     }
   }
 
+  // Delay for a given number of milliseconds
   delay(ms) {
     return new Promise(res => setTimeout(res, ms));
   }
-
+  
+  // Get introductory text for question type
   getQuestionIntro(type) {
     switch(type) {
       case 'singleChoice': return 'Питання з однією правильною відповіддю';
@@ -174,7 +180,7 @@ class TTSClientService {
     }
     return 'Питання';
   }
-
+  // Speak a single question
   async speakQuestion(question) {
     this.stopRequested = false;
 
@@ -198,11 +204,12 @@ class TTSClientService {
         }
       }
     } catch (error) {
-      console.error('❌ TTS failed for question:', question.text, error);
+      console.error('TTS failed for question:', question.text, error);
       alert('Сталася помилка озвучення питання. Будь ласка, спробуйте пізніше або вимкніть додаткові розширення у браузері.');
     }
   }
 
+  // Speak all questions
   async speakAllQuestions(questions, onProgress = null) {
     this.stopRequested = false;
 
@@ -235,5 +242,4 @@ class TTSClientService {
     if (onProgress) onProgress("Завершено", 1);
   }
 }
-
 export const ttsClient = new TTSClientService();

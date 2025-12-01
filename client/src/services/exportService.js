@@ -3,9 +3,7 @@ import html2canvas from "html2canvas";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
-/**
- * Формує текстовий варіант з урахуванням includeAnswers
- */
+// Generates plain text representation of questions depending on includeAnswers flag
 export function generatePlainText(questions = [], includeAnswers = true) {
   let out = "Результат генерації запитань:\n\n";
   questions.forEach((q, idx) => {
@@ -32,6 +30,7 @@ export function generatePlainText(questions = [], includeAnswers = true) {
   return out;
 }
 
+// Converts Uint8Array to Base64 string
 function uint8ToBase64(uint8) {
   const CHUNK_SIZE = 0x8000; 
   let index = 0;
@@ -45,9 +44,7 @@ function uint8ToBase64(uint8) {
   return btoa(result);
 }
 
-/**
- * Генерує простий HTML 
- */
+// Generates simple HTML representation of questions depending on includeAnswers flag
 export function generateHTML(questions = [], includeAnswers = true) {
   const escape = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   let html = `<!doctype html><html><head><meta charset="utf-8"><title>Questions</title>
@@ -91,37 +88,28 @@ export function generateHTML(questions = [], includeAnswers = true) {
   return html;
 }
 
-/**
- * Export TXT
- */
+// Export TXT
 export function exportTXT(questions, includeAnswers, filename = "questions.txt") {
   const content = generatePlainText(questions, includeAnswers);
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
   saveAs(blob, filename);
 }
 
-/**
- * Export DOC (MS Word) 
- */
+// Export DOC (MS Word) 
 export function exportDOC(questions, includeAnswers, filename = "questions.doc") {
   const html = generateHTML(questions, includeAnswers);
   const blob = new Blob([html], { type: "application/msword;charset=utf-8" });
   saveAs(blob, filename);
 }
 
-/**
- * Export HTML
- */
+// Export HTML
 export function exportHTML(questions, includeAnswers, filename = "questions.html") {
   const html = generateHTML(questions, includeAnswers);
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   saveAs(blob, filename);
 }
 
-/**
- * Export PDF using jsPDF (посторінково, простий алгоритм).
- * onProgress(percent, message) — опціональний колбек
- */
+// Export PDF using jsPDF (page-by-page, simple algorithm).
 export async function exportPDF(questions, includeAnswers, filename = "questions.pdf", onProgress = () => {}) {
   onProgress(5, "Формую PDF...");
 
@@ -141,7 +129,7 @@ export async function exportPDF(questions, includeAnswers, filename = "questions
 
   doc.addFileToVFS("Roboto-Regular.ttf", fontBase64);
   doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-  doc.setFont("Roboto"); // кирилиця тепер відображається
+  doc.setFont("Roboto"); 
 
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
@@ -208,15 +196,12 @@ export async function exportPDF(questions, includeAnswers, filename = "questions
 }
 
 
-/**
- * Export PNG ZIP: для кожного питання створюємо картинку (використовуючи html2canvas)
- * onProgress(percent, message)
- */
+// Export PNG ZIP: for each question create an image (using html2canvas)
 export async function exportPNGZip(questions = [], includeAnswers = true, filename = "questions_images.zip", onProgress = () => {}) {
   onProgress(2, "Починаю збір зображень...");
   const zip = new JSZip();
 
-  // Для зручності ми створюємо оффскрін контейнер
+  // For convenience, create an offscreen container
   const offscreen = document.createElement("div");
   offscreen.style.position = "fixed";
   offscreen.style.left = "-9999px";
@@ -229,7 +214,7 @@ export async function exportPNGZip(questions = [], includeAnswers = true, filena
     const q = questions[i];
     onProgress(Math.round(2 + (i / questions.length) * 90), `Рендер питання ${i + 1} з ${questions.length}...`);
 
-    // Створюємо DOM елемент з питанням
+    // Create question wrapper
     const wrapper = document.createElement("div");
     wrapper.style.width = "760px";
     wrapper.style.padding = "16px";
@@ -271,15 +256,13 @@ export async function exportPNGZip(questions = [], includeAnswers = true, filena
 
     offscreen.appendChild(wrapper);
 
-    // робимо скрін
-    // опції html2canvas — підвищують якість
-    // чекаємо рендер
-    // eslint-disable-next-line no-await-in-loop
+    // take a screenshot
+    // html2canvas options — improve quality
     const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: "#ffffff" });
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
     zip.file(`question_${i + 1}.png`, blob);
 
-    // очищаємо wrapper
+    // clear wrapper
     offscreen.removeChild(wrapper);
   }
 

@@ -5,15 +5,16 @@ from datetime import datetime, timedelta
 from typing import Dict, Tuple, List
 
 logger = logging.getLogger("keyword-service")
-
+# CacheManager class with automatic cleanup
 class CacheManager:
+    # Initialization
     def __init__(self, cleanup_interval_minutes: int = 30):
         self.session_keywords: Dict[str, Tuple[List[str], datetime]] = {}
-        self.cleanup_interval = cleanup_interval_minutes * 60  # у секундах
+        self.cleanup_interval = cleanup_interval_minutes * 60  # in seconds
         self._start_cleanup_thread()
-    
+    # Get keywords with access time update
     def get(self, session_id: str) -> List[str]:
-        """Отримання ключових слів з оновленням часу доступу"""
+        """Get keywords with access time update"""
         if session_id in self.session_keywords:
             keywords, _ = self.session_keywords[session_id]
             self.session_keywords[session_id] = (keywords, datetime.now())
@@ -21,11 +22,11 @@ class CacheManager:
         return None
     
     def set(self, session_id: str, keywords: List[str]):
-        """Збереження ключових слів"""
+        """Save keywords"""
         self.session_keywords[session_id] = (keywords, datetime.now())
     
     def cleanup_old_entries(self):
-        """Видалення застарілих записів"""
+        """Remove old entries"""
         current_time = datetime.now()
         keys_to_delete = []
         
@@ -40,25 +41,25 @@ class CacheManager:
         return len(keys_to_delete)
     
     def _cleanup_loop(self):
-        """Фоновий цикл очищення"""
+        """Background cleanup loop"""
         while True:
             try:
                 deleted_count = self.cleanup_old_entries()
                 if deleted_count > 0:
-                    logger.info(f"🧹 Автоматично видалено {deleted_count} застарілих записів")
+                    logger.info(f"Automatically deleted {deleted_count} old entries")
             except Exception as e:
-                logger.error(f"❌ Помилка при очищенні кешу: {e}")
+                logger.error(f"Error during cache cleanup: {e}")
             
             time.sleep(self.cleanup_interval)
     
     def _start_cleanup_thread(self):
-        """Запуск фонового потоку очищення"""
+        """Background thread for automatic cleanup"""
         thread = threading.Thread(target=self._cleanup_loop, daemon=True)
         thread.start()
-        logger.info(f"🔄 Запущено автоматичне очищення кешу (кожні {self.cleanup_interval//60} хв)")
+        logger.info(f"Started automatic cache cleanup (every {self.cleanup_interval//60} minutes)")
     
     def get_stats(self) -> dict:
-        """Статистика кешу"""
+        """Cache statistics"""
         current_time = datetime.now()
         total_entries = len(self.session_keywords)
         old_entries = 0

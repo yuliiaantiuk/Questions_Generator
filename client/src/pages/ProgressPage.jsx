@@ -12,7 +12,7 @@ const ProgressPage = () => {
   const [status, setStatus] = useState("starting");
   const intervalRef = useRef(null);
   const sessionId = sessionStorage.getItem("sessionId");
-
+  // Function to fetch progress from server
     const fetchProgress = async () => {
     try {
       const response = await fetch(`http://localhost:5000/api/questions/progress/${sessionId}`);
@@ -24,7 +24,7 @@ const ProgressPage = () => {
         setIsPaused(data.isPaused);
         
         if (data.status === "completed") {
-          // Переходимо на сторінку результатів
+          // Navigate to results page with generated questions
           navigate("/result", { 
             state: { 
               questions: data.questions,
@@ -43,6 +43,7 @@ const ProgressPage = () => {
     }
   };
 
+  // Function to pause or resume generation
   const handlePauseResume = async () => {
     try {
       if (isPaused) {
@@ -63,6 +64,7 @@ const ProgressPage = () => {
     }
   };
 
+  // Function to cancel generation
   const handleGenerationCancel = async () => {
     try {
       await fetch(`http://localhost:5000/api/questions/cancel/${sessionId}`, {
@@ -99,7 +101,7 @@ const ProgressPage = () => {
     startGeneration();
   }, [sessionId, settings, navigate]);
 
-  // Інтервал для оновлення прогресу
+  // Interval to fetch progress
   useEffect(() => {
     intervalRef.current = setInterval(fetchProgress, 2000);
     
@@ -147,10 +149,10 @@ const ProgressPage = () => {
           )}
         </div>
 
-        {/* Статус */}
+        {/* Status */}
         <div style={styles.statusText}>{getStatusText()}</div>
 
-        {/* Прогрес-бар */}
+        {/* Progress bar */}
         <div style={styles.progressBar}>
           <div
             style={{

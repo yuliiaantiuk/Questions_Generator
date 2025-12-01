@@ -16,14 +16,17 @@ const SettingsPage = () => {
   const [hasGeneratedEmpty, setHasGeneratedEmpty] = useState(false); 
   const [isLoadingKeywords, setIsLoadingKeywords] = useState(false);
 
+  // Calculate total number of questions
   const totalQuestions =
     (Number(singleChoice) || 0) +
     (Number(multipleChoice) || 0) +
     (Number(trueFalse) || 0) +
     (Number(shortAnswer) || 0);
 
+    // Disable the button if totalQuestions is 0
   const isButtonDisabled = totalQuestions === 0;
 
+  // Keep the session alive by pinging the server every 5 minutes
   useEffect(() => {
     const sessionId = sessionStorage.getItem("sessionId");
     if (!sessionId) return;
@@ -43,7 +46,7 @@ const SettingsPage = () => {
     };
   }, []);
 
-  // Функція для збереження ключових слів на сервері
+  // Function to save keywords to the server
   const saveKeywordsToServer = async (keywordsToSave) => {
     if (!textSessionId) return;
     
@@ -65,17 +68,18 @@ const SettingsPage = () => {
     }
   };
 
-  // Функція для видалення ключового слова
+  // Function to remove a keyword
   const removeKeyword = (indexToRemove) => {
     const newKeywords = keywords.filter((_, index) => index !== indexToRemove);
     setKeywords(newKeywords);
     
-    // Автоматично зберігаємо оновлений список на сервері
+    // Automatically save the updated list to the server
     if (textSessionId) {
       saveKeywordsToServer(newKeywords);
     }
   };
 
+  // Handle generation start
   const handleGenerationStart = () => {
     navigate("/progress", {
       state: {
@@ -89,6 +93,7 @@ const SettingsPage = () => {
     });
   };
 
+  // Handle showing keywords
   const handleShowKeywords = async () => {
     setIsLoadingKeywords(true);
 
@@ -108,6 +113,7 @@ const SettingsPage = () => {
         return;
       }
 
+      // Determine if we need to force regenerate keywords
       const forceRegenerate = hasGeneratedEmpty && keywords.length === 0;
 
       const response = await fetch("http://localhost:5000/api/generate/keywords", {

@@ -7,6 +7,7 @@ const UploadPage = () => {
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
+  // Restore file state from session storage on component mount
   useEffect(() => {
     const sessionId = sessionStorage.getItem("sessionId");
     if (sessionId) {
@@ -14,8 +15,9 @@ const UploadPage = () => {
     }
   }, []);
 
+  // Allowed file formats for upload
   const allowedFormats = [".txt", ".doc", ".docx", ".pdf"];
-
+  // Save file state to session storage
   const saveFileState = (file) => {
     if (file) {
       const fileState = {
@@ -30,19 +32,19 @@ const UploadPage = () => {
       sessionStorage.removeItem('uploadedFileState');
     }
   };
-
+  // Restore file state from session storage
   const restoreFileState = async () => {
     const savedFileState = sessionStorage.getItem('uploadedFileState');
     if (savedFileState) {
       const fileState = JSON.parse(savedFileState);
 
-      // Створюємо "фейковий" файл тільки для відображення
+      // Create a "fake" file object for display purposes only
       const restoredFile = {
         name: fileState.name,
         size: fileState.size,
         type: fileState.type,
         lastModified: fileState.lastModified,
-        isRestored: true // ВАЖЛИВО: позначаємо як відновлений
+        isRestored: true // Mark as restored
       };
       
       setFile(restoredFile);
@@ -55,7 +57,7 @@ const UploadPage = () => {
 
   const uploadData = async () => {
     try {
-      // Якщо файл відновлений - просто переходимо, НЕ відправляємо на сервер
+      // If file is restored, skip upload and navigate
       if (file && file.isRestored) {
         console.log("Файл вже завантажений, переходимо до налаштувань");
         navigate("/settings");
@@ -79,7 +81,6 @@ const UploadPage = () => {
         });
         saveFileState(null);
       }
-    // ... решта коду залишається без змін
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -89,7 +90,7 @@ const UploadPage = () => {
     const result = await response.json();
     console.log("Дані збережено:", result);
 
-    // Передаємо ID або токен сесії на наступну сторінку
+    // Pass session ID or token to the next page
     sessionStorage.setItem("sessionId", result.sessionId);
     navigate("/settings");
   } catch (error) {
@@ -97,7 +98,7 @@ const UploadPage = () => {
   }
 };
 
-
+  // Handle file upload input change
   const handleFileUpload = (e) => {
     const uploadedFile = e.target.files[0];
     if (uploadedFile && isFileValid(uploadedFile.name)) {
@@ -112,12 +113,13 @@ const UploadPage = () => {
     }
   };
 
+  // Handle file removal
   const handleRemoveFile = () => {
     setFile(null);
     saveFileState(null);
   };
 
-
+  // Handle text input change
   const handleTextChange = (e) => {
     const newText = e.target.value;
     setText(newText);
@@ -127,13 +129,14 @@ const UploadPage = () => {
     }
   };
 
+  // Calculate word count in text input
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
 
   const isButtonEnabled = (file && isFileValid(file.name)) || wordCount >= 500;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Файл перед відправкою:", file); // Додай цей лог
+    console.log("Файл перед відправкою:", file); 
     if (file && file.isRestored) {
       console.log("Файл відновлений, просто переходимо");
       navigate("/settings");

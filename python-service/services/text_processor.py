@@ -2,15 +2,16 @@ import re
 from stop_words import get_stop_words
 from utils import *
 import pymorphy3
-
+# TextProcessor class for text processing
 class TextProcessor:
+    # Initialization
     def __init__(self):
         self.stopwords_uk = set(get_stop_words('uk'))
         self.common_verbs = COMMON_VERBS
         self.function_words = FUNCTION_WORDS
         self.custom_exclude = CUSTOM_EXCLUDE
         self.morph = pymorphy3.MorphAnalyzer(lang="uk")
-
+    # Normalize lemma method
     def normalize_lemma(self, word: str) -> str:
         p = self.morph.parse(word)
         if p:
@@ -18,7 +19,7 @@ class TextProcessor:
         return word
     
     def filter_main_content(self, text: str) -> str:
-        """Фільтрація основного вмісту тексту"""
+        """Filter main content of the text"""
         lines = text.splitlines()
         main_lines = []
         skip_block = False
@@ -41,26 +42,26 @@ class TextProcessor:
             main_lines.append(line)
         
         return " ".join(main_lines)
-
+    # Stopword check method
     def is_stopword(self, word: str) -> bool:
         word_for_check = word.replace("'", "")
 
         if len(word_for_check) < 3:
             return True
 
-        # Вбудовані стоп-слова
+        # Built-in stopwords
         if word_for_check in self.stopwords_uk:
             return True
 
-        # Частовживані дієслова
+        # Common verbs
         if word_for_check in self.common_verbs:
             return True
 
-        # Службові та неповнозначні слова
+        # Function and semantically light words
         if word_for_check in self.function_words:
             return True
 
-        # Кастомні виключення
+        # Custom exclusions
         if word_for_check in self.custom_exclude:
             return True
 
@@ -71,7 +72,7 @@ class TextProcessor:
         if len(word) < 6:
             return False
             
-        # Типові суфікси імен по батькові в українській мові
+        # Typical patronymic suffixes in Ukrainian
         patronymic_suffixes = {
             'ович', 'івна', 'євич', 'івна', 'іч', 'ічна', 
             'овна', 'євна', 'йович', 'ївна', 'евич', 'евна'

@@ -6,27 +6,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const TEMP_STORAGE = path.join(__dirname, "..", "..", "temp");
-// console.log("TEMP_STORAGE у sessionManager:", TEMP_STORAGE);
 
 const sessions = new Map(); // sessionId -> { filePath, lastActive }
 
-// додаємо нову сесію
+// Add a new session
 export function createSession(sessionId, filePath) {
   sessions.set(sessionId, { filePath, lastActive: Date.now() });
   console.log(`Створено сесію: ${sessionId}, файл: ${filePath}`);
 }
 
-// отримуємо сесію
+// Get session data
 export function getSession(sessionId) {
   if (sessions.has(sessionId)) {
-    // оновлюємо активність при зверненні
+    // update activity on access
     sessions.get(sessionId).lastActive = Date.now();
     return sessions.get(sessionId);
   }
   return null;
 }
 
-// оновлюємо дані сесії
+// Update session data
 export function updateSession(sessionId, newData) {
   if (sessions.has(sessionId)) {
     const session = sessions.get(sessionId);
@@ -38,7 +37,7 @@ export function updateSession(sessionId, newData) {
   return false;
 }
 
-// оновлюємо активність
+// Update session activity timestamp
 export function updateSessionActivity(sessionId) {
   if (sessions.has(sessionId)) {
     sessions.get(sessionId).lastActive = Date.now();
@@ -46,10 +45,10 @@ export function updateSessionActivity(sessionId) {
   }
 }
 
-// очищаємо неактивні сесії
+// Cleanup inactive sessions
 export function cleanupInactiveSessions() {
   const now = Date.now();
-  const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 хв
+  const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
   let cleanedCount = 0;
 
   for (const [sessionId, { filePath, lastActive }] of sessions.entries()) {
@@ -75,5 +74,5 @@ export function cleanupInactiveSessions() {
   }
 }
 
-// запускаємо автоматичне очищення кожні 10 хв
+// Start automatic cleanup every 10 minutes
 setInterval(cleanupInactiveSessions, 10 * 60 * 1000);

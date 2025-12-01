@@ -1,15 +1,11 @@
 import fs from "fs";
 import pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
 
-/**
- * Конвертує PDF-файл у текст
- * @param {string} filePath - шлях до PDF файлу
- * @returns {Promise<string>} - текст з PDF
- */
+// Converts PDF file to text
 export async function pdfToText(filePath) {
   const data = new Uint8Array(fs.readFileSync(filePath));
 
-  // Завантажуємо документ
+  // Loading document
   const loadingTask = pdfjsLib.getDocument({ 
     data,
     verbosity: pdfjsLib.VerbosityLevel.ERRORS,
@@ -19,7 +15,7 @@ export async function pdfToText(filePath) {
   const pdfDoc = await loadingTask.promise;
   let textContent = "";
 
-  // Проходимо всі сторінки
+  // Iterating through all pages
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     const page = await pdfDoc.getPage(i);
     const content = await page.getTextContent();

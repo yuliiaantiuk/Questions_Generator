@@ -11,37 +11,32 @@ if (!OPENROUTER_API_KEY) {
   console.warn('⚠️  OpenRouter API key not found. Please set OPENROUTER_API_KEY in .env');
 }
 
-// Кеш для уникнення дублювання питань
+// Cache for generated questions to avoid duplicates
 const questionCache = new Set();
 
-/**
- * Генерує унікальний ідентифікатор для питання
- */
+// Generates a unique identifier for a question
 function generateQuestionHash(questionText, questionType) {
   return `${questionType}_${questionText.substring(0, 50).replace(/\s+/g, '_')}`;
 }
 
-/**
- * Перевіряє, чи не було вже згенеровано схоже питання
- */
+// Checks if a similar question has already been generated
 function isQuestionUnique(questionText, questionType) {
   const hash = generateQuestionHash(questionText, questionType);
   if (questionCache.has(hash)) {
-    console.log(`🔄 Пропускаємо дубльоване питання: ${questionText.substring(0, 50)}...`);
+    console.log(`Skipping duplicate question: ${questionText.substring(0, 50)}...`);
     return false;
   }
   questionCache.add(hash);
   return true;
 }
 
-/**
- * Очищає кеш питань
- */
+// Clears the question cache
 export function clearQuestionCache() {
   questionCache.clear();
-  console.log('🧹 Кеш питань очищено');
+  console.log('Question cache cleared');
 }
 
+// Calls OpenRouter API to generate question
 export async function callOpenRouter(prompt, options = {}) {
   if (!OPENROUTER_API_KEY) {
     throw new Error("OpenRouter API key not configured");
@@ -56,7 +51,7 @@ export async function callOpenRouter(prompt, options = {}) {
     questionType = "unknown"
   } = options;
 
-  console.log(`🔄 Виклик OpenRouter API для ${questionType} (temperature: ${temperature})`);
+  console.log(`Виклик OpenRouter API для ${questionType} (temperature: ${temperature})`);
 
   let responseText;
 
@@ -119,10 +114,7 @@ export async function callOpenRouter(prompt, options = {}) {
   return parsed;
 }
 
-
-/**
- * Допоміжна функція для перевірки доступності API
- */
+// Helper function to check API availability
 export async function checkOpenRouterAvailability() {
   try {
     const response = await axios.get(

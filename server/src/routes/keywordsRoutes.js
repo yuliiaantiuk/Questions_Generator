@@ -12,18 +12,18 @@ const TEMP_DIR = path.join(__dirname, "..", "..", "temp");
 const PY_URL = process.env.PY_KEYWORDS_URL || "http://127.0.0.1:8000";
 
 const router = express.Router();
-
+// Generate keywords from uploaded file
 router.post("/keywords", async (req, res) => {
   try {
     const { sessionId: fileSessionId, forceRegenerate = false } = req.body;
     if (!fileSessionId) return res.status(400).json({ error: "sessionId required" });
 
-    // Перевіряємо існування папки temp
+    // Check if temp directory exists
     if (!fs.existsSync(TEMP_DIR)) {
       return res.status(500).json({ error: "Temp dir not found on server" });
     }
 
-    // Шукаємо файл користувача
+    // Find user file
     console.log("TEMP_DIR:", TEMP_DIR);
     console.log("Files in temp:", fs.readdirSync(TEMP_DIR));
 
@@ -33,7 +33,6 @@ router.post("/keywords", async (req, res) => {
     if (!fileName) return res.status(404).json({ error: "File not found" });
 
     const filePath = path.join(TEMP_DIR, fileName);
-    // const ext = path.extname(filePath).toLowerCase();
 
     let textContent = fs.readFileSync(filePath, "utf8");
 
@@ -50,11 +49,10 @@ router.post("/keywords", async (req, res) => {
       });
     }
 
-
-    // Генеруємо textSessionId для Python-кешу (MD5 тексту)
+    // Generate textSessionId for Python cache (MD5 of text)
     const textSessionId = crypto.createHash("md5").update(textContent).digest("hex");
 
-    // Якщо не форсована регенерація, спробуємо отримати збережені ключові слова
+    // If not force regenerate, try to get saved keywords
     if (!forceRegenerate) {
       try {
         const savedResponse = await fetch(`${PY_URL}/get_keywords/${textSessionId}`);
@@ -62,7 +60,7 @@ router.post("/keywords", async (req, res) => {
           const savedKeywords = await savedResponse.json();
           console.log("Знайдено збережені ключові слова, кількість:", savedKeywords.length);
           
-          // Якщо є збережені ключові слова - повертаємо їх
+          // If found saved keywords, return them
           if (savedKeywords && savedKeywords.length > 0) {
             return res.json({ 
               fileSessionId,
@@ -77,7 +75,7 @@ router.post("/keywords", async (req, res) => {
       }
     }
 
-    // Генеруємо нові ключові слова
+    // Generate new keywords
     console.log("Генерація нових ключових слів...");
     const response = await fetch(`${PY_URL}/keywords`, {
       method: "POST",
@@ -111,7 +109,7 @@ router.post("/keywords", async (req, res) => {
   }
 });
 
-// PUT /api/generate/keywords - оновлення ключових слів
+// Update keywords for a session
 router.put("/keywords", async (req, res) => {
   try {
     const { textSessionId, keywords } = req.body;
@@ -120,7 +118,7 @@ router.put("/keywords", async (req, res) => {
       return res.status(400).json({ error: "textSessionId and keywords required" });
     }
 
-    // Оновлюємо ключові слова в Python сервісі
+    // Update keywords in Python service
     const response = await fetch(`${PY_URL}/save_keywords`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

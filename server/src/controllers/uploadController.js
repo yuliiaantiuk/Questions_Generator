@@ -9,15 +9,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const TEMP_STORAGE = path.join(__dirname, "..", "..", "temp");
-// console.log("TEMP_STORAGE у uploadController:", TEMP_STORAGE);
 
-// перевіряємо, що директорія існує
+// Check and create TEMP_STORAGE directory if it doesn't exist
 if (!fs.existsSync(TEMP_STORAGE)) {
   fs.mkdirSync(TEMP_STORAGE, { recursive: true });
-  console.log("Створено директорію:", TEMP_STORAGE);
+  console.log("Created directory:", TEMP_STORAGE);
 }
 
-// Збереження текстових даних
+// Saving text data
 export const handleTextUpload = async (req, res) => {
   try {
     const { text } = req.body;
@@ -30,26 +29,26 @@ export const handleTextUpload = async (req, res) => {
 
     fs.writeFileSync(filePath, text, "utf-8");
 
-    // після успішного збереження — реєструємо сесію
+    // after successful save — register the session
     createSession(sessionId, filePath);
 
-    res.status(200).json({ message: "Текст збережено", sessionId });
-    console.log("Текст збережено у:", filePath);
+    res.status(200).json({ message: "Text saved", sessionId });
+    console.log("Text saved at:", filePath);
   } catch (error) {
-    console.error("Помилка збереження тексту:", error);
-    res.status(500).json({ error: "Помилка збереження тексту" });
+    console.error("Error saving text:", error);
+    res.status(500).json({ error: "Error saving text" });
   }
 };
 
 export const handleFileUpload = async (req, res) => {
   try {
     if (!req.file)
-      return res.status(400).json({ error: "Файл не завантажено" });
+      return res.status(400).json({ error: "File not uploaded" });
 
     const sessionId = uuidv4();
     const ext = path.extname(req.file.originalname).toLowerCase();
 
-    // парсинг файлу до переміщення
+    // parsing file before moving
     let textContent = "";
     if (ext === ".txt") {
       textContent = fs.readFileSync(req.file.path, "utf8");
@@ -62,19 +61,18 @@ export const handleFileUpload = async (req, res) => {
 
     const wordCount = textContent.trim().split(/\s+/).length;
     if (wordCount < 500 || wordCount > 1000000) {
-      fs.unlinkSync(req.file.path); // видаляємо тимчасовий файл
+      fs.unlinkSync(req.file.path); // delete temporary file
       return res.status(400).json({ 
         error: `Файл має ${wordCount} слів. Дозволено від 500 до 1 000 000.` 
       });
     }
 
-    // переміщення файлу в TEMP_STORAGE
+    // move to TEMP_STORAGE
     const newFileName = `${sessionId}.txt`;
     const newPath = path.join(TEMP_STORAGE, newFileName);
-    // fs.renameSync(req.file.path, newPath);
     fs.writeFileSync(newPath, textContent, "utf8");
 
-    // створення сесії 
+    // create session 
     createSession(sessionId, newPath);
 
     res.status(200).json({ message: "Файл збережено", sessionId });

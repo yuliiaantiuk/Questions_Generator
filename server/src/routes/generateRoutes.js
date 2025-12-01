@@ -19,9 +19,9 @@ const generationProgress = new Map();
 
 const PAUSE_TIMEOUT = 30 * 60 * 1000;
 
-// 📤 POST /api/questions - запуск генерації питань
+// Start question generation
 router.post("/", async (req, res) => {
-  console.log("📥 Отримано запит на генерацію питань:", req.body);
+  console.log("Отримано запит на генерацію питань:", req.body);
   
   try {
     const { sessionId, singleChoice = 0, multipleChoice = 0, trueFalse = 0, shortAnswer = 0, difficulty = "medium", keywords = [] } = req.body;
@@ -34,7 +34,7 @@ router.post("/", async (req, res) => {
     const totalQuestions = parseInt(singleChoice) + parseInt(multipleChoice) + parseInt(trueFalse) + parseInt(shortAnswer);
     if (totalQuestions === 0) return res.status(400).json({ error: "Вкажіть кількість запитань" });
 
-    // 🎯 ІНІЦІАЛІЗАЦІЯ ПРОГРЕСУ З ЧАСОМ ПАУЗИ
+    // Innitialize progress
     generationProgress.set(sessionId, {
       progress: 0,
       status: "starting",
@@ -42,7 +42,7 @@ router.post("/", async (req, res) => {
       isPaused: false,
       isCancelled: false,
       error: null,
-      pauseStartTime: null, // Час початку паузи
+      pauseStartTime: null, // time when pause started
       config: {
         singleChoice: parseInt(singleChoice),
         multipleChoice: parseInt(multipleChoice),
@@ -59,25 +59,25 @@ router.post("/", async (req, res) => {
     res.json({ success: true, message: "Генерація питань розпочата", sessionId, totalQuestions });
 
   } catch (err) {
-    console.error("❌ Помилка запуску генерації:", err);
+    console.error("Помилка запуску генерації:", err);
     res.status(500).json({ error: "Помилка запуску генерації: " + err.message });
   }
 });
 
-// 📊 GET /api/questions/progress/:sessionId
+// Get generation progress
 router.get("/progress/:sessionId", (req, res) => {
   try {
     const { sessionId } = req.params;
     const progress = generationProgress.get(sessionId);
-    if (!progress) return res.status(404).json({ error: "Прогрес не знайдено" });
+    if (!progress) return res.status(404).json({ error: "Progress not found" });
 
-    // 🔄 ПЕРЕВІРКА ТАЙМАУТУ ПАУЗИ
+    // Check for pause timeout
     if (progress.isPaused && progress.pauseStartTime) {
       const pauseDuration = Date.now() - progress.pauseStartTime;
       if (pauseDuration > PAUSE_TIMEOUT) {
         progress.status = "cancelled";
         progress.error = "Генерацію автоматично скасовано через занадто тривалу паузу (30+ хвилин)";
-        console.log(`⏰ Автоматичне скасування генерації для сесії ${sessionId} через таймаут паузи`);
+        console.log(`Автоматичне скасування генерації для сесії ${sessionId} через таймаут паузи`);
       }
     }
 
@@ -90,12 +90,12 @@ router.get("/progress/:sessionId", (req, res) => {
       error: progress.error
     });
   } catch (err) {
-    console.error("❌ Помилка отримання прогресу:", err);
+    console.error("Помилка отримання прогресу:", err);
     res.status(500).json({ error: "Помилка отримання прогресу" });
   }
 });
 
-// ⏸️ PUT /api/questions/pause/:sessionId
+// Pause generation
 router.put("/pause/:sessionId", (req, res) => {
   try {
     const { sessionId } = req.params;
@@ -104,60 +104,60 @@ router.put("/pause/:sessionId", (req, res) => {
 
     progress.isPaused = true;
     progress.status = "paused";
-    progress.pauseStartTime = Date.now(); // 🕒 ЗАПАМ'ЯТОВУЄМО ЧАС ПОЧАТКУ ПАУЗИ
+    progress.pauseStartTime = Date.now(); // Remember pause start time
     
-    console.log(`⏸️ Генерацію поставлено на паузу для сесії ${sessionId}`);
+    console.log(`Генерацію поставлено на паузу для сесії ${sessionId}`);
     res.json({ success: true, status: "paused" });
   } catch (err) {
-    console.error("❌ Помилка паузи:", err);
+    console.error("Помилка паузи:", err);
     res.status(500).json({ error: "Помилка паузи" });
   }
 });
 
-// ▶️ PUT /api/questions/resume/:sessionId
+// Resume generation
 router.put("/resume/:sessionId", (req, res) => {
   try {
     const { sessionId } = req.params;
     const progress = generationProgress.get(sessionId);
-    if (!progress) return res.status(404).json({ error: "Прогрес не знайдено" });
+    if (!progress) return res.status(404).json({ error: "Progress not found" });
 
     progress.isPaused = false;
     progress.status = "generating";
-    progress.pauseStartTime = null; // 🕒 СКИДАЄМО ТАЙМЕР ПАУЗИ
+    progress.pauseStartTime = null; // Reset pause timer
     
-    console.log(`▶️ Генерацію відновлено для сесії ${sessionId}`);
+    console.log(`Генерацію відновлено для сесії ${sessionId}`);
     res.json({ success: true, status: "generating" });
   } catch (err) {
-    console.error("❌ Помилка продовження:", err);
+    console.error("Помилка продовження:", err);
     res.status(500).json({ error: "Помилка продовження" });
   }
 });
 
-// ❌ DELETE /api/questions/cancel/:sessionId
+// Cancel generation
 router.delete("/cancel/:sessionId", (req, res) => {
   try {
     const { sessionId } = req.params;
     const progress = generationProgress.get(sessionId);
-    if (!progress) return res.status(404).json({ error: "Прогрес не знайдено" });
+    if (!progress) return res.status(404).json({ error: "Progress not found" });
 
     progress.isCancelled = true;
     progress.status = "cancelled";
     progress.pauseStartTime = null;
     
-    console.log(`❌ Генерацію скасовано для сесії ${sessionId}`);
+    console.log(`Генерацію скасовано для сесії ${sessionId}`);
     
-    // 🧹 НЕГАЙНО ВИДАЛЯЄМО З МАПИ
+    // Delete progress after cancellation
     generationProgress.delete(sessionId);
-    console.log(`🧹 Очищено прогрес для сесії ${sessionId}`);
+    console.log(`Очищено прогрес для сесії ${sessionId}`);
     
     res.json({ success: true, status: "cancelled" });
   } catch (err) {
-    console.error("❌ Помилка скасування:", err);
+    console.error("Помилка скасування:", err);
     res.status(500).json({ error: "Помилка скасування" });
   }
 });
 
-// 🎯 ОНОВЛЕНА ФУНКЦІЯ ГЕНЕРАЦІЇ
+// Generation logic
 async function generateQuestionsAsync(sessionId) {
   let progress = generationProgress.get(sessionId);
   if (!progress) return;
@@ -165,7 +165,7 @@ async function generateQuestionsAsync(sessionId) {
   const config = progress.config;
   progress.status = "generating";
   
-  console.log(`🚀 Запуск генерації ${getTotalQuestions(config)} питань для сесії ${sessionId}`);
+  console.log(`Запуск генерації ${getTotalQuestions(config)} питань для сесії ${sessionId}`);
 
   try {
     const questions = await hfGenerateQuestions(config, 
@@ -183,7 +183,7 @@ async function generateQuestionsAsync(sessionId) {
 
     const finalProgress = generationProgress.get(sessionId);
     if (!finalProgress || finalProgress.isCancelled) {
-      console.log(`⏹️ Генерацію скасовано для сесії ${sessionId}`);
+      console.log(`Генерацію скасовано для сесії ${sessionId}`);
       return;
     }
 
@@ -208,10 +208,10 @@ async function generateQuestionsAsync(sessionId) {
       }
     }, null, 2));
 
-    console.log(`✅ Генерація завершена. Результати збережено: ${resultsPath}`);
+    console.log(`Генерація завершена. Результати збережено: ${resultsPath}`);
 
   } catch (err) {
-    console.error("❌ Помилка в генерації:", err);
+    console.error("Помилка в генерації:", err);
     if (progress) {
       progress.status = "error";
       progress.error = err.message;
