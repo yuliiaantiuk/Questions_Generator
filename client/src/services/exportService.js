@@ -53,7 +53,7 @@ export function generateHTML(questions = [], includeAnswers = true) {
     .q{margin-bottom:18px; padding:8px; border-bottom:1px solid #ddd}
     .q h3{margin:0 0 6px 0}
     .opt{margin-left:14px}
-    .correct{font-weight:700; color: #ddd}
+    .correct{font-weight:700; color: #000000ff}
   </style>
   </head><body>`;
   html += `<h1>Результат генерації</h1>`;
