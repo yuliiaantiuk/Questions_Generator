@@ -19,137 +19,7 @@ function updateGenerationProgress(sessionId, progressValue) {
 function getGenerationStatus(sessionId) {
   return generationProgress.get(sessionId);
 }
-
-// export async function hfGenerateQuestions(config, onProgress, shouldStop) {
-//   const { sessionId } = config;
-//    if (!checkAndSetGenerationStatus(sessionId)) {
-//     throw new Error('GENERATION_ALREADY_IN_PROGRESS');
-//   }
-//   const MAX_GENERATION_TIME = 15 * 60 * 1000; 
-//   const startTime = Date.now();
-
-//   const {
-//     singleChoice,
-//     multipleChoice, 
-//     trueFalse,
-//     shortAnswer,
-//     difficulty,
-//     keywords,
-//     filePath
-//   } = config;
-
-//   const textContent = fs.readFileSync(filePath, 'utf8');
-//   const totalQuestions = singleChoice + multipleChoice + trueFalse + shortAnswer;
-//   let generatedQuestions = [];
-//   let completed = 0;
-//   const existingQuestions = generatedQuestions.map(q => q.text);
-
-//   clearQuestionCache();
-
-//   // Check OpenRouter API availability
-//   const isApiAvailable = await checkOpenRouterAvailability();
-//   if (!isApiAvailable) {
-//     throw new Error('OpenRouter API is unavailable. Please check your connection or API key.');
-//   }
-
-//   // Update progress
-//   const updateProgress = () => {
-//     completed++;
-//     const progress = Math.round((completed / totalQuestions) * 100);
-//     onProgress(progress);
-//   };
-
-//   console.log(`Початок генерації ${totalQuestions} питань (рівень: ${difficulty})`);
-
-//   // Pause handling with 30-minute timeout
-//   const waitIfPaused = async () => {
-//     if (!shouldStop || !shouldStop()) return false; // If not paused, continue
-    
-//     console.log('⏸ Generation paused, waiting...');
-//     const startTime = Date.now();
-//     const timeout = 30 * 60 * 1000; // 30 minutes
-    
-//     while (shouldStop && shouldStop()) {
-//       // Check timeout
-//       if (Date.now() - startTime > timeout) {
-//         console.log('Reached maximum wait time (30 minutes)');
-//         return true; // Timeout - stop generation
-//       }
-      
-//       // Wait 1 second before next check
-//       await new Promise(resolve => setTimeout(resolve, 1000));
-//     }
-    
-//     console.log('Resuming generation after pause');
-//     return false; // Continue generation
-//   };
-
-//   // Generate questions by type
-//   const generateQuestionType = async (count, generator, typeName) => {
-//     for (let i = 0; i < count; i++) {
-//       if (Date.now() - startTime > MAX_GENERATION_TIME) {
-//         console.log(`Reached maximum generation time (15 minutes), stopping. Generated ${generatedQuestions.length} questions`);
-//         return true;
-//       }
-
-//       const shouldCancel = await waitIfPaused();
-//       if (shouldCancel) {
-//         console.log(`Generation paused timeout reached. Generated ${generatedQuestions.length} questions`);
-//         return true;
-//       }
-
-//       if (shouldStop && shouldStop()) {
-//         console.log(`Generation cancelled. Generated ${generatedQuestions.length} questions`);
-//         return true; 
-//       }
-      
-//       try {
-//         const question = await generator(i, count);
-//         generatedQuestions.push(question);
-//         updateProgress();
-//         await delay(1200);
-//       } catch (error) {
-//         if (error.message === "DUPLICATE_QUESTION") {
-//           console.log("Duplicate question detected, regenerating...");
-//           i--;
-//           await delay(500);
-//           continue;
-//         }
-
-//         if (error.message === "INVALID_JSON") {
-//           console.warn(`⚠️ Model returned invalid JSON. Retrying generation...`);
-//           i--;
-//           await delay(800);
-//           continue;
-//         }
-
-//         console.error(`Unexpected error generating ${typeName}:`, error);
-//         throw error;
-//       }
-//     }
-//     return false; 
-//   };
-
-//   const generators = [
-//     { count: singleChoice, generator: (i, total) => generateSingleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'singleChoice' },
-//     { count: multipleChoice, generator: (i, total) => generateMultipleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'multipleChoice' },
-//     { count: trueFalse, generator: (i, total) => generateTrueFalseQuestion(textContent, difficulty, keywords, i, total), name: 'trueFalse' },
-//     { count: shortAnswer, generator: (i, total) => generateShortAnswerQuestion(textContent, difficulty, keywords, i, total), name: 'shortAnswer' }
-//   ];
-
-//   for (const { count, generator, name } of generators) {
-//     if (count > 0) {
-//       console.log(`Generating ${count} questions of type ${name}`);
-//       const wasCancelled = await generateQuestionType(count, generator, name);
-//       if (wasCancelled) {
-//         return generatedQuestions; // Return what has been generated so far
-//       }
-//     }
-//   }
-
-//   console.log(`Generation completed! Created ${generatedQuestions.length} questions`);
-//   return generatedQuestions;
-// }
+// Main function to generate questions
 export async function hfGenerateQuestions(config, onProgress, shouldStop) {
   const { sessionId } = config;
   
@@ -191,13 +61,6 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
       throw new Error('OpenRouter API is unavailable. Please check your connection or API key.');
     }
 
-    // Update progress
-    // const updateProgress = () => {
-    //   completed++;
-    //   const progress = Math.round((completed / totalQuestions) * 100);
-    //   onProgress(progress);
-    // };
-
     const updateProgress = () => {
       completed++;
       const progress = Math.round((completed / totalQuestions) * 100);
@@ -234,6 +97,7 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
     // Generate questions by type
     const generateQuestionType = async (count, generator, typeName) => {
       for (let i = 0; i < count; i++) {
+        let retryCount = 0;
         if (Date.now() - startTime > MAX_GENERATION_TIME) {
           console.log(`Reached maximum generation time (15 minutes), stopping. Generated ${generatedQuestions.length} questions`);
           return true;
@@ -259,7 +123,6 @@ export async function hfGenerateQuestions(config, onProgress, shouldStop) {
           if (error.message === "DUPLICATE_QUESTION") {
             console.log("Duplicate question detected, regenerating...");
             const maxRetries = 5;
-            let retryCount = 0;
             if (retryCount < maxRetries) {
               retryCount++;
               i--; // Спробувати знову те саме питання

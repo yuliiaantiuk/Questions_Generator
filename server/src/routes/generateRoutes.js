@@ -38,14 +38,6 @@ router.post("/", async (req, res) => {
             totalQuestions: getTotalQuestions(existingProgress.config || req.body)
         });
     }
-    // const existingProgress = generationProgress.get(sessionId);
-    // if (existingProgress && existingProgress.status === "generating") {
-    //   console.log(`❌ Blocking duplicate request for session ${sessionId} - already generating`);
-    //   return res.status(200).json({ 
-    //     success: false,
-    //     message: "Генерація вже виконується для цієї сесії" 
-    //   });
-    // }
 
     const session = getSession(sessionId);
     if (!session) return res.status(404).json({ error: "Сесія не знайдена" });
@@ -176,76 +168,6 @@ router.delete("/cancel/:sessionId", (req, res) => {
     res.status(500).json({ error: "Помилка скасування" });
   }
 });
-
-// Generation logic
-// async function generateQuestionsAsync(sessionId) {
-//   let progress = generationProgress.get(sessionId);
-//   if (!progress) return;
-
-//   const config = progress.config;
-//   progress.status = "generating";
-  
-//   console.log(`Запуск генерації ${getTotalQuestions(config)} питань для сесії ${sessionId}`);
-
-//   try {
-//     const questions = await hfGenerateQuestions(config, 
-//       (currentProgress) => {
-//         const current = generationProgress.get(sessionId);
-//         if (current && !current.isPaused && !current.isCancelled) {
-//           current.progress = currentProgress;
-//         }
-//       },
-//       () => {
-//         const current = generationProgress.get(sessionId);
-//         return !current || current.isPaused || current.isCancelled;
-//       }
-//     );
-
-//     const finalProgress = generationProgress.get(sessionId);
-//     if (!finalProgress || finalProgress.isCancelled) {
-//       console.log(`Генерацію скасовано для сесії ${sessionId}`);
-//       generationProgress.delete(sessionId);
-//       return;
-//     }
-
-//     progress.progress = 100;
-//     progress.status = "completed";
-//     progress.questions = questions;
-
-//     updateSession(sessionId, { questions });
-
-//     const resultsPath = path.join(TEMP_STORAGE, `${sessionId}_results.json`);
-//     fs.writeFileSync(resultsPath, JSON.stringify({
-//       questions: questions,
-//       metadata: {
-//         generatedAt: new Date().toISOString(),
-//         totalQuestions: questions.length,
-//         difficulty: config.difficulty,
-//         keywords: config.keywords,
-//         singleChoice: config.singleChoice,
-//         multipleChoice: config.multipleChoice,
-//         trueFalse: config.trueFalse,
-//         shortAnswer: config.shortAnswer
-//       }
-//     }, null, 2));
-
-//     console.log(`Генерація завершена. Результати збережено: ${resultsPath}`);
-//     generationProgress.delete(sessionId);
-
-//   } catch (err) {
-//     console.error("Помилка в генерації:", err);
-//     if (progress) {
-//       if (err.message === 'GENERATION_ALREADY_IN_PROGRESS') {
-//         // progress.status = "duplicate_request";
-//         // progress.error = "Генерація вже виконується для цієї сесії. Зачекайте будь ласка.";
-//         console.log(`⚠️ Попередження: Подвійний запит на генерацію для сесії ${sessionId}`);
-//       } else {
-//         progress.status = "error";
-//         progress.error = err.message;
-//       }
-//     }
-//   }
-// }
 
 async function generateQuestionsAsync(sessionId) {
   let progress = generationProgress.get(sessionId);
