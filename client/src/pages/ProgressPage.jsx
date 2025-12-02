@@ -11,6 +11,7 @@ const ProgressPage = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [status, setStatus] = useState("starting");
   const intervalRef = useRef(null);
+  const hasStartedRef = useRef(false);
   const sessionId = sessionStorage.getItem("sessionId");
   // Function to fetch progress from server
     const fetchProgress = async () => {
@@ -78,6 +79,8 @@ const ProgressPage = () => {
 
   useEffect(() => {
     const startGeneration = async () => {
+      if (hasStartedRef.current) return;
+      hasStartedRef.current = true;
       try {
         const response = await fetch("http://localhost:5000/api/questions", {
           method: "POST",
@@ -91,6 +94,7 @@ const ProgressPage = () => {
         if (!response.ok) {
           throw new Error("Не вдалося запустити генерацію");
         }
+        console.log("Генерацію успішно ініційовано");
       } catch (error) {
         console.error("Error starting generation:", error);
         alert("Помилка запуску генерації");
@@ -98,7 +102,9 @@ const ProgressPage = () => {
       }
     };
 
-    startGeneration();
+    if (sessionId) {
+        startGeneration();
+    }
   }, [sessionId, settings, navigate]);
 
   // Interval to fetch progress

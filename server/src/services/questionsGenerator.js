@@ -1,132 +1,352 @@
 import { callOpenRouter, checkOpenRouterAvailability, clearQuestionCache } from './openRouterService.js';
 import fs from 'fs';
 
-export async function hfGenerateQuestions(config, onProgress, shouldStop) {
-  const MAX_GENERATION_TIME = 15 * 60 * 1000; 
-  const startTime = Date.now();
+const activeGenerations = new Map();
+const generationProgress = new Map();
 
-  const {
-    singleChoice,
-    multipleChoice, 
-    trueFalse,
-    shortAnswer,
-    difficulty,
-    keywords,
-    filePath
-  } = config;
-
-  const textContent = fs.readFileSync(filePath, 'utf8');
-  const totalQuestions = singleChoice + multipleChoice + trueFalse + shortAnswer;
-  let generatedQuestions = [];
-  let completed = 0;
-  const existingQuestions = generatedQuestions.map(q => q.text);
-
-  clearQuestionCache();
-
-  // Check OpenRouter API availability
-  const isApiAvailable = await checkOpenRouterAvailability();
-  if (!isApiAvailable) {
-    throw new Error('OpenRouter API is unavailable. Please check your connection or API key.');
-  }
-
-  // Update progress
-  const updateProgress = () => {
-    completed++;
-    const progress = Math.round((completed / totalQuestions) * 100);
-    onProgress(progress);
-  };
-
-  console.log(`Початок генерації ${totalQuestions} питань (рівень: ${difficulty})`);
-
-  // Pause handling with 30-minute timeout
-  const waitIfPaused = async () => {
-    if (!shouldStop || !shouldStop()) return false; // If not paused, continue
-    
-    console.log('⏸ Generation paused, waiting...');
-    const startTime = Date.now();
-    const timeout = 30 * 60 * 1000; // 30 minutes
-    
-    while (shouldStop && shouldStop()) {
-      // Check timeout
-      if (Date.now() - startTime > timeout) {
-        console.log('Reached maximum wait time (30 minutes)');
-        return true; // Timeout - stop generation
-      }
-      
-      // Wait 1 second before next check
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    
-    console.log('Resuming generation after pause');
-    return false; // Continue generation
-  };
-
-  // Generate questions by type
-  const generateQuestionType = async (count, generator, typeName) => {
-    for (let i = 0; i < count; i++) {
-      if (Date.now() - startTime > MAX_GENERATION_TIME) {
-        console.log(`Reached maximum generation time (15 minutes), stopping. Generated ${generatedQuestions.length} questions`);
-        return true;
-      }
-
-      const shouldCancel = await waitIfPaused();
-      if (shouldCancel) {
-        console.log(`Generation paused timeout reached. Generated ${generatedQuestions.length} questions`);
-        return true;
-      }
-
-      if (shouldStop && shouldStop()) {
-        console.log(`Generation cancelled. Generated ${generatedQuestions.length} questions`);
-        return true; 
-      }
-      
-      try {
-        const question = await generator(i, count);
-        generatedQuestions.push(question);
-        updateProgress();
-        await delay(1200);
-      } catch (error) {
-        if (error.message === "DUPLICATE_QUESTION") {
-          console.log("Duplicate question detected, regenerating...");
-          i--;
-          await delay(500);
-          continue;
-        }
-
-        if (error.message === "INVALID_JSON") {
-          console.warn(`⚠️ Model returned invalid JSON. Retrying generation...`);
-          i--;
-          await delay(800);
-          continue;
-        }
-
-        console.error(`Unexpected error generating ${typeName}:`, error);
-        throw error;
-      }
-    }
-    return false; 
-  };
-
-  const generators = [
-    { count: singleChoice, generator: (i, total) => generateSingleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'singleChoice' },
-    { count: multipleChoice, generator: (i, total) => generateMultipleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'multipleChoice' },
-    { count: trueFalse, generator: (i, total) => generateTrueFalseQuestion(textContent, difficulty, keywords, i, total), name: 'trueFalse' },
-    { count: shortAnswer, generator: (i, total) => generateShortAnswerQuestion(textContent, difficulty, keywords, i, total), name: 'shortAnswer' }
-  ];
-
-  for (const { count, generator, name } of generators) {
-    if (count > 0) {
-      console.log(`Generating ${count} questions of type ${name}`);
-      const wasCancelled = await generateQuestionType(count, generator, name);
-      if (wasCancelled) {
-        return generatedQuestions; // Return what has been generated so far
-      }
+// Function to update progress globally
+function updateGenerationProgress(sessionId, progressValue) {
+  if (generationProgress.has(sessionId)) {
+    const progress = generationProgress.get(sessionId);
+    progress.progress = progressValue;
+    if (progressValue === 100) {
+      progress.status = "completed";
     }
   }
-
-  console.log(`Generation completed! Created ${generatedQuestions.length} questions`);
-  return generatedQuestions;
 }
+
+// Function to get generation status
+function getGenerationStatus(sessionId) {
+  return generationProgress.get(sessionId);
+}
+
+// export async function hfGenerateQuestions(config, onProgress, shouldStop) {
+//   const { sessionId } = config;
+//    if (!checkAndSetGenerationStatus(sessionId)) {
+//     throw new Error('GENERATION_ALREADY_IN_PROGRESS');
+//   }
+//   const MAX_GENERATION_TIME = 15 * 60 * 1000; 
+//   const startTime = Date.now();
+
+//   const {
+//     singleChoice,
+//     multipleChoice, 
+//     trueFalse,
+//     shortAnswer,
+//     difficulty,
+//     keywords,
+//     filePath
+//   } = config;
+
+//   const textContent = fs.readFileSync(filePath, 'utf8');
+//   const totalQuestions = singleChoice + multipleChoice + trueFalse + shortAnswer;
+//   let generatedQuestions = [];
+//   let completed = 0;
+//   const existingQuestions = generatedQuestions.map(q => q.text);
+
+//   clearQuestionCache();
+
+//   // Check OpenRouter API availability
+//   const isApiAvailable = await checkOpenRouterAvailability();
+//   if (!isApiAvailable) {
+//     throw new Error('OpenRouter API is unavailable. Please check your connection or API key.');
+//   }
+
+//   // Update progress
+//   const updateProgress = () => {
+//     completed++;
+//     const progress = Math.round((completed / totalQuestions) * 100);
+//     onProgress(progress);
+//   };
+
+//   console.log(`Початок генерації ${totalQuestions} питань (рівень: ${difficulty})`);
+
+//   // Pause handling with 30-minute timeout
+//   const waitIfPaused = async () => {
+//     if (!shouldStop || !shouldStop()) return false; // If not paused, continue
+    
+//     console.log('⏸ Generation paused, waiting...');
+//     const startTime = Date.now();
+//     const timeout = 30 * 60 * 1000; // 30 minutes
+    
+//     while (shouldStop && shouldStop()) {
+//       // Check timeout
+//       if (Date.now() - startTime > timeout) {
+//         console.log('Reached maximum wait time (30 minutes)');
+//         return true; // Timeout - stop generation
+//       }
+      
+//       // Wait 1 second before next check
+//       await new Promise(resolve => setTimeout(resolve, 1000));
+//     }
+    
+//     console.log('Resuming generation after pause');
+//     return false; // Continue generation
+//   };
+
+//   // Generate questions by type
+//   const generateQuestionType = async (count, generator, typeName) => {
+//     for (let i = 0; i < count; i++) {
+//       if (Date.now() - startTime > MAX_GENERATION_TIME) {
+//         console.log(`Reached maximum generation time (15 minutes), stopping. Generated ${generatedQuestions.length} questions`);
+//         return true;
+//       }
+
+//       const shouldCancel = await waitIfPaused();
+//       if (shouldCancel) {
+//         console.log(`Generation paused timeout reached. Generated ${generatedQuestions.length} questions`);
+//         return true;
+//       }
+
+//       if (shouldStop && shouldStop()) {
+//         console.log(`Generation cancelled. Generated ${generatedQuestions.length} questions`);
+//         return true; 
+//       }
+      
+//       try {
+//         const question = await generator(i, count);
+//         generatedQuestions.push(question);
+//         updateProgress();
+//         await delay(1200);
+//       } catch (error) {
+//         if (error.message === "DUPLICATE_QUESTION") {
+//           console.log("Duplicate question detected, regenerating...");
+//           i--;
+//           await delay(500);
+//           continue;
+//         }
+
+//         if (error.message === "INVALID_JSON") {
+//           console.warn(`⚠️ Model returned invalid JSON. Retrying generation...`);
+//           i--;
+//           await delay(800);
+//           continue;
+//         }
+
+//         console.error(`Unexpected error generating ${typeName}:`, error);
+//         throw error;
+//       }
+//     }
+//     return false; 
+//   };
+
+//   const generators = [
+//     { count: singleChoice, generator: (i, total) => generateSingleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'singleChoice' },
+//     { count: multipleChoice, generator: (i, total) => generateMultipleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'multipleChoice' },
+//     { count: trueFalse, generator: (i, total) => generateTrueFalseQuestion(textContent, difficulty, keywords, i, total), name: 'trueFalse' },
+//     { count: shortAnswer, generator: (i, total) => generateShortAnswerQuestion(textContent, difficulty, keywords, i, total), name: 'shortAnswer' }
+//   ];
+
+//   for (const { count, generator, name } of generators) {
+//     if (count > 0) {
+//       console.log(`Generating ${count} questions of type ${name}`);
+//       const wasCancelled = await generateQuestionType(count, generator, name);
+//       if (wasCancelled) {
+//         return generatedQuestions; // Return what has been generated so far
+//       }
+//     }
+//   }
+
+//   console.log(`Generation completed! Created ${generatedQuestions.length} questions`);
+//   return generatedQuestions;
+// }
+export async function hfGenerateQuestions(config, onProgress, shouldStop) {
+  const { sessionId } = config;
+  
+  const existingProgress = getGenerationStatus(sessionId);
+  if (existingProgress && existingProgress.status === "generating") {
+    console.log(`⚠️ Global progress shows generation already running for ${sessionId}`);
+  }
+
+  // Перевірка чи вже виконується генерація для цієї сесії
+  if (!checkAndSetGenerationStatus(sessionId)) {
+    throw new Error('GENERATION_ALREADY_IN_PROGRESS');
+  }
+
+  try {
+    const MAX_GENERATION_TIME = 15 * 60 * 1000; 
+    const startTime = Date.now();
+
+    const {
+      singleChoice,
+      multipleChoice, 
+      trueFalse,
+      shortAnswer,
+      difficulty,
+      keywords,
+      filePath
+    } = config;
+
+    const textContent = fs.readFileSync(filePath, 'utf8');
+    const totalQuestions = singleChoice + multipleChoice + trueFalse + shortAnswer;
+    let generatedQuestions = [];
+    let completed = 0;
+    const existingQuestions = generatedQuestions.map(q => q.text);
+
+    clearQuestionCache();
+
+    // Check OpenRouter API availability
+    const isApiAvailable = await checkOpenRouterAvailability();
+    if (!isApiAvailable) {
+      throw new Error('OpenRouter API is unavailable. Please check your connection or API key.');
+    }
+
+    // Update progress
+    // const updateProgress = () => {
+    //   completed++;
+    //   const progress = Math.round((completed / totalQuestions) * 100);
+    //   onProgress(progress);
+    // };
+
+    const updateProgress = () => {
+      completed++;
+      const progress = Math.round((completed / totalQuestions) * 100);
+      onProgress(progress); // Оригінальний callback
+      updateGenerationProgress(sessionId, progress); // Додаткове оновлення
+    };
+
+
+    console.log(`Початок генерації ${totalQuestions} питань (рівень: ${difficulty})`);
+
+    // Pause handling with 30-minute timeout
+    const waitIfPaused = async () => {
+      if (!shouldStop || !shouldStop()) return false; // If not paused, continue
+      
+      console.log('⏸ Generation paused, waiting...');
+      const startTime = Date.now();
+      const timeout = 30 * 60 * 1000; // 30 minutes
+      
+      while (shouldStop && shouldStop()) {
+        // Check timeout
+        if (Date.now() - startTime > timeout) {
+          console.log('Reached maximum wait time (30 minutes)');
+          return true; // Timeout - stop generation
+        }
+        
+        // Wait 1 second before next check
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      console.log('Resuming generation after pause');
+      return false; // Continue generation
+    };
+
+    // Generate questions by type
+    const generateQuestionType = async (count, generator, typeName) => {
+      for (let i = 0; i < count; i++) {
+        if (Date.now() - startTime > MAX_GENERATION_TIME) {
+          console.log(`Reached maximum generation time (15 minutes), stopping. Generated ${generatedQuestions.length} questions`);
+          return true;
+        }
+
+        const shouldCancel = await waitIfPaused();
+        if (shouldCancel) {
+          console.log(`Generation paused timeout reached. Generated ${generatedQuestions.length} questions`);
+          return true;
+        }
+
+        if (shouldStop && shouldStop()) {
+          console.log(`Generation cancelled. Generated ${generatedQuestions.length} questions`);
+          return true; 
+        }
+        
+        try {
+          const question = await generator(i, count);
+          generatedQuestions.push(question);
+          updateProgress();
+          await delay(1200);
+        } catch (error) {
+          if (error.message === "DUPLICATE_QUESTION") {
+            console.log("Duplicate question detected, regenerating...");
+            const maxRetries = 5;
+            let retryCount = 0;
+            if (retryCount < maxRetries) {
+              retryCount++;
+              i--; // Спробувати знову те саме питання
+              await delay(500);
+              continue;
+            } else {
+              console.log("Max retries for duplicate question, skipping this question");
+              // Пропускаємо це питання, не зменшуємо i
+              continue;
+            }
+          }
+
+          if (error.message === "INVALID_JSON") {
+            console.warn(`⚠️ Model returned invalid JSON. Retrying generation...`);
+            i--;
+            await delay(800);
+            continue;
+          }
+
+          console.error(`Unexpected error generating ${typeName}:`, error);
+          throw error;
+        }
+      }
+      return false; 
+    };
+
+    const generators = [
+      { count: singleChoice, generator: (i, total) => generateSingleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'singleChoice' },
+      { count: multipleChoice, generator: (i, total) => generateMultipleChoiceQuestion(textContent, difficulty, keywords, i, total), name: 'multipleChoice' },
+      { count: trueFalse, generator: (i, total) => generateTrueFalseQuestion(textContent, difficulty, keywords, i, total), name: 'trueFalse' },
+      { count: shortAnswer, generator: (i, total) => generateShortAnswerQuestion(textContent, difficulty, keywords, i, total), name: 'shortAnswer' }
+    ];
+
+    for (const { count, generator, name } of generators) {
+      if (count > 0) {
+        console.log(`Generating ${count} questions of type ${name}`);
+        const wasCancelled = await generateQuestionType(count, generator, name);
+        if (wasCancelled) {
+          return generatedQuestions; // Return what has been generated so far
+        }
+      }
+    }
+
+    console.log(`Generation completed! Created ${generatedQuestions.length} questions`);
+    return generatedQuestions;
+    
+  } finally {
+    // ВАЖЛИВО: завжди очищаємо статус навіть при помилці
+    clearGenerationStatus(sessionId);
+  }
+}
+// Function to check and set generation status for a session
+function checkAndSetGenerationStatus(sessionId) {
+  if (!sessionId) {
+    console.log('⚠️ Invalid sessionId provided, cannot start generation');
+    return false;
+  }
+
+  if (activeGenerations.has(sessionId)) {
+    console.log(`⚠️ Active generation found for session ${sessionId}, skipping duplicate`);
+    return false;
+  }
+  activeGenerations.set(sessionId, Date.now());
+  return true; // Can start a new generation
+}
+
+function clearGenerationStatus(sessionId) {
+  activeGenerations.delete(sessionId);
+}
+
+setInterval(() => {
+  const now = Date.now();
+  let cleanedCount = 0;
+  
+  for (const [sessionId, timestamp] of activeGenerations.entries()) {
+    // Якщо генерація "зависла" більше ніж на 10 хвилин
+    if (now - timestamp > 10 * 60 * 1000) {
+      activeGenerations.delete(sessionId);
+      console.log(`Cleaned up stale generation for session ${sessionId}`);
+      cleanedCount++;
+    }
+  }
+  
+  if (cleanedCount > 0) {
+    console.log(`✅ Periodically cleaned ${cleanedCount} stale generation entries`);
+  }
+}, 10 * 60 * 1000);
 
 // Function to generate a single choice question
 async function generateSingleChoiceQuestion(text, difficulty, keywords, currentIndex, totalCount, existingQuestions) {
